@@ -59,6 +59,7 @@ int main(){
             // printf("This is the int in cell (%i, %i): %i\n", i, j, *(int *) UArray2b_at(test, i, j));
             // num++;
 
+
         }
     }
 
