@@ -1,0 +1,133 @@
+           CS 40 Lab: Unboxed and 2D Arrays
+
+
++--------------------------------------------------------+
+|Keeper of the record:   Yoda Ermias (yermia01)          |
+|--------------------------------------------------------|
+| Other group member(s):     Liam Smith (lsmith26)       |
+|                                                        |
+|                                                        |
+|                                                        |
++--------------------------------------------------------+
+
+
+PART 1: BOXED AND UNBOXED ARRAYS
+--------------------------------
+
+You are about to design the interface and implementation for a
+collection data type, i.e., an ADT like Hanson's, and you are
+considering the tradeoffs between using a boxed or an unboxed
+interface for values that users store in your collection.
+
+1A: Briefly define the terms "boxed" and "unboxed" as used for these
+    interfaces (i.e., help us be sure you know which is which!):
+
+Boxed means that the data is stored in pointers which are allocated elsewhere.
+
+Unboxed means that the specific instances of the data are stored.
+
+
+
+
+1B: List two (or more) advantages of the boxed representation.
+
+Allows for simplier interfaces.
+
+Allows elements to outlive the death of the boxed array.
+
+Allows container to be resized without affect the validity of 
+pointers stored inside it.
+
+
+1C: List two (or more) advantages of an unboxed representation.
+
+Interface is less simply but allows the client to use unboxed array
+without needing to allocate and free the memory.
+
+Memory is allocated at the container's creation.
+
+
+
+
+1D: Look at the interface to UArray (a link to an interface
+    summary is at the start of the lab instructions). Discuss the 
+    methods that show the use of the unboxed style. Why, for example, 
+    does UArray_new take both a number of elements and an element size? 
+
+
+The length is needed to allocate the proper amount of indecies for an array.
+The size is needed to allocate space for the elements within each index.
+
+
+
+
+
+
+
+
+PART 2: 2D Arrays from 1D Arrays
+--------------------------------
+
+2A. One way to construct a 2D array is to use multiple 1D
+    arrays. Describe briefly how you would do this. For example, if
+    the user asked you to create a 5x7 array of values, how many
+    one-dimensional arrays would you create? If the user asked to
+    store a value in cell [3,6] where would it go?
+
+
+5 x 7 = 5 columns, 7 rows
+We would use 7 1D arrays of length 5 to construct a 2D array that's 
+5x7.
+
+A value in cell [3,6] would go in the fourth column's seventh row.
+
+
+
+2B. Another approach is to use a single one-dimensional array and to
+    put all the elements of the 2D array into that. Again, assuming
+    that you are to create a 7x5 2D array, give a mathematical formula
+    for the index in the 2D array where a value [x,y] would go in the
+    1D array.
+
+
+
+
+
+
+
+
+2C. (optional) is there another mapping that would work as well?
+
+Using a Table
+
+
+
+
+
+
+
+
+
+
+PART 3: Designing the UArray2 Interface
+---------------------------------------
+
+3A. Describe three (or more) things you learned about the design and semantics
+    of the UArray2 interface from reading useuarray2.c and from running
+    correct_useuarray2.
+
+
+The first thing that we learned was that the column major mapping comes 
+before the row major mapping.
+
+The second thing we learned is that the corners of the array are marked 
+with a value.
+
+The third thing we learned is that a reference is passed to the free function
+to free the UArray.
+
+
+
+
+
+

@@ -1,0 +1,33 @@
+-----
+Names:
+-----
+Cooper Golemme (cgolem01)
+Yoda Ermias (yermia01)
+
+---------------
+Acknowledgements:
+---------------
+We asked TAs in office hours for help with understanding the assignment and
+some issues we encountered. 
+
+We used stack overflow for tracing valgrind issues.
+
+We consulted Hanson's guide to C for documentation of different data structures.
+
+-----------
+Implemented:
+-----------
+We believe that we have implemented all elements of the spec to the
+specifications, returning EOF when fgetc encounters and error is
+something that we are still working on.
+
+We have noticed that on row 8 of the turing-corrupt.pgm file, we are getting a
+"invalid read of size 1" error in valgrind. We believe that the error is caused
+by a character, but have not been able to properly diagnose the cause of the 
+valgrind issue.  
+
+-------------
+Time Estimate:
+-------------
+
+25 hours:

@@ -1,0 +1,26 @@
+iii README
+
+Authors: Liam Smith (lsmith26) and Yoda Ermias (yermia01)
+
+Files included:
+    README
+    Makefile
+    uarray2.h
+    uarray2.c
+    bit2.h
+    bit2.c
+    sudoku.c
+    unblackedges.c
+
+Help received:
+    TAs: Sam, Bill, Catherine, Julia, Valerie
+    Credit: to course website for stdin or file read function
+    Credit to Hanson UArray and CS40 idioms.
+
+What has been correctly implemented:
+    UArray2
+    Bit2
+    Sudoku
+    Unblackededges
+
+Time spent: 25 hours
