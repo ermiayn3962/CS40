@@ -20,16 +20,18 @@ struct UArray2b_T {
 
 
 void apply_initializeUArray2(int col, int row, UArray2_T uArr, void *element, void *cl);
+void initializeBlocks(int col, int row, UArray2_T uArr2, void *elem, void *cl);
+
 void apply_freeUArrays(int col, int row, UArray2_T uArr2, void *elem, void *cl);
 
 
 
 int main(){
 
-    UArray2b_T test = UArray2b_new(5, 7, 3, 3);
-    assert(test->height == 7);
+    UArray2b_T test = UArray2b_new(9, 9, 3, 3);
+    assert(test->height == 9);
     assert(test->blockSize == 3);
-    assert(test->width == 5);
+    assert(test->width == 9);
     assert(test->size == 3);
     assert(test->blockData != NULL);
 
@@ -40,25 +42,46 @@ int main(){
 
 
     /* Populate UArray2b */
-    // int num = 0;
-    // for (int i = 0; i < 3; i++) {
-    //     for (int j = 0; j < 2; j++) {
-    //         UArray_T block = UArray2_at(test->blockData, i / test->blockSize, j / test->blockSize);
-    //         *(int *)UArray_at(block, 0) = num;
-    //         num++;
-    //         printf("This is the int in cell (%i, %i): %i\n", i, j, *(int *) UArray2b_at(test, i, j));
+   
+    /* Loop through the blocks */
+    // for (int blockRow = 0; blockRow < UArray2_height(test->blockData); blockRow++) {
+    //     printf("blockRow: %i\n", blockRow);
+    //     for (int blockCol = 0; blockCol < UArray2_width(test->blockData); blockCol++) {
+    //         /* Loop through the entire span of data in a block */
+    //         printf("blockCol: %i\n", blockCol);
+    //         for (int i = 0; i < UArray2b_height(test); i++) {
+    //             printf("i: %i\n", i);
+    //             for (int j = 0; j < UArray2b_width(test); j++) {
+    //                 printf("j: %i\n", i);
+
+    //                 /* finding the row and columns in the block */
+    //                 int col = j - (test->blockSize * blockCol);
+    //                 int row = i - (test->blockSize * blockRow);
+    //                 //UArray_T *block = (UArray_T *) UArray2_at(test->blockData, j / test->blockSize, i / test->blockSize);
+    //                 // (void) block;
+    //                 printf("This is the index in uArray: %i\n",  row * test->blockSize + col);
+    //                 //UArray_at(*block, row * test->blockSize + col);
+    //             }
+    //         }
 
     //     }
     // }
 
-    int num = 0;
-    for (int i = 0; i < UArray2_height(test->blockData); i++) {
-        for (int j = 0; j < UArray2_width(test->blockData); j++) {
-            UArray_T block = UArray2_at(test->blockData, ceil((double) j / (double) test->blockSize), ceil((double) i / (double) test->blockSize));
-            *(int *)UArray_at(block, j - (test->blockSize * j / test->blockSize)) = num; 
-            // printf("This is the int in cell (%i, %i): %i\n", i, j, *(int *) UArray2b_at(test, i, j));
-            // num++;
 
+    for (int row = 0; row < test->height/test->blockSize; row ++){
+        for (int col = 0; col < test->width/test->blockSize; col ++) {
+            UArray_T *block = (UArray_T *) UArray2_at(test->blockData, col / test->blockSize, row / test->blockSize);
+            for (int k = 0; k < test->blockSize * test->blockSize; k++) {
+                printf("Index (using k): %i\n", k);
+                void *elem = UArray_at(*block, k);
+                (void) elem;
+                // printf("Index (using k): %i\n", k);
+                // printf("Index (using math): %i\n", test->blockSize * (row % test->blockSize) + (col % test->blockSize));
+
+
+            }
+            printf("\n");
+            // printf("This is the block (%i, %i)\n", col / test->blockSize, row / test->blockSize);
 
         }
     }
@@ -66,7 +89,7 @@ int main(){
     /* Print using block mapping */
 
     
-    //UArray2b_free (&test);
+    UArray2b_free (&test);
     printf("We work!\n");
 
 }
@@ -104,9 +127,19 @@ UArray2b_T UArray2b_new (int width, int height, int size, int blockSize)
     printf("UArray2 height %d\n", UArray2_height(uArr2b->blockData));
     printf("UArray2 width %d\n", UArray2_width(uArr2b->blockData));
     //create UArray of blocksize * blocksize
+    UArray2_map_row_major(uArr2b->blockData, initializeBlocks, &uArr2b);
    
 
     return uArr2b;
+}
+
+void initializeBlocks(int col, int row, UArray2_T uArr2, void *elem, void *cl)
+{
+    (void) elem;
+    UArray2b_T  temp = *(UArray2b_T *) cl;
+    int blockSize = temp->blockSize;
+    int size = temp->size;
+    *(UArray_T *) UArray2_at(uArr2, col, row) = UArray_new(blockSize * blockSize, size);
 }
 
 
@@ -121,8 +154,9 @@ UArray2b_T UArray2b_new (int width, int height, int size, int blockSize)
 void UArray2b_free (T *array2b)
 {   
     assert(array2b != NULL && *array2b != NULL);
-    UArray2_map_row_major((*array2b)->blockData, apply_freeUArrays, NULL);
+    // UArray2_map_row_major((*array2b)->blockData, apply_freeUArrays, NULL);
     UArray2_free(&(*array2b)->blockData);
+    free((*array2b)->blockData);
 
     free(*array2b);
 
@@ -136,6 +170,8 @@ void apply_freeUArrays(int col, int row, UArray2_T uArr2, void *elem, void *cl)
     (void) cl;
     UArray_free((UArray_T *) elem);
 }
+
+
 int UArray2b_width (T array2b)
 {
     assert(array2b != NULL);
@@ -159,31 +195,40 @@ int UArray2b_blocksize(T array2b)
 // /* return a pointer to the cell in the given column and row.
 // * index out of range is a checked run-time error
 // */
-void *UArray2b_at(T array2b, int column, int row)
+void *UArray2b_at(T array2b, int col, int row)
 {
     /* Find the block in the UArray2b */
-    UArray_T block = UArray2_at(array2b->blockData, column / array2b->blockSize, row / array2b->blockSize);
+    UArray_T block = *(UArray_T *) UArray2_at(array2b->blockData, col / array2b->blockSize, row / array2b->blockSize);
+    void *element = UArray_at(block, (array2b->blockSize * row) + col);
 
     /* Within block call at to get cell */
-    return UArray_at(block, array2b->blockSize * (column % array2b->blockSize) + (row % array2b->blockSize));
+    return element;
 }
-// /* visits every cell in one block before moving to another block */
-// void UArray2b_map(T array2b,
-//                     void apply(int col, int row, T array2b,
-//                     void *elem, void *cl),
-//                     void *cl)
-// {
-//     for (int i = 0; i < UArray2_height(array2b->blockData); i++) {
-//         for (int j = 0; j < UArray2_width(array2b->blockData); j++) {
-//             // UArray_T block = UArray2_at(array2b->blockData, i / array2b->blockSize, j / array2b->blockSize);
-//             // *(int *)UArray_at(block, 0) 
-//             // printf("This is the int in cell (%i, %i): %i\n", i, j, *(int *) UArray2b_at(array2b, i, j));
 
-//         }
-//     }
+/* visits every cell in one block before moving to another block */
+void UArray2b_map(T array2b,
+                    void apply(int col, int row, T array2b,
+                    void *elem, void *cl),
+                    void *cl)
+{
+    int height = array2b->height;
+    int width = array2b->width;
+    int blockSize = array2b->blockSize;
+    
+    for (int row = 0; row < height/blockSize; row ++){
+        for (int col = 0; col < width/blockSize; col ++) {
+            UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col /blockSize, row / blockSize);
+            for (int k = 0; k < blockSize * blockSize; k++) {
+                void *elem = UArray_at(*block, k);
+                apply(col, row, array2b, elem, cl);
 
-// }
-// /*
-// * it is a checked run-time error to pass a NULL T
-// * to any function in this interface
-// */
+            }
+
+        }
+    }
+
+}
+/*
+* it is a checked run-time error to pass a NULL T
+* to any function in this interface
+*/
