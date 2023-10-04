@@ -211,10 +211,14 @@ void UArray2b_map(T array2b,
                     void *elem, void *cl),
                     void *cl)
 {
-    for (int row = 0; row < array2b->height/array2b->blockSize; row ++){
-        for (int col = 0; col < array2b->width/array2b->blockSize; col ++) {
-            UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col / array2b->blockSize, row / array2b->blockSize);
-            for (int k = 0; k < array2b->blockSize * array2b->blockSize; k++) {
+    int height = array2b->height;
+    int width = array2b->width;
+    int blockSize = array2b->blockSize;
+    
+    for (int row = 0; row < height/blockSize; row ++){
+        for (int col = 0; col < width/blockSize; col ++) {
+            UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col/blockSize, row / blockSize);
+            for (int k = 0; k < blockSize * blockSize; k++) {
                 void *elem = UArray_at(*block, k);
                 apply(col, row, array2b, elem, cl);
 
