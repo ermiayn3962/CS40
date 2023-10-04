@@ -217,7 +217,7 @@ void UArray2b_map(T array2b,
     
     for (int row = 0; row < height/blockSize; row ++){
         for (int col = 0; col < width/blockSize; col ++) {
-            UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col/blockSize, row / blockSize);
+            UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col /blockSize, row / blockSize);
             for (int k = 0; k < blockSize * blockSize; k++) {
                 void *elem = UArray_at(*block, k);
                 apply(col, row, array2b, elem, cl);
