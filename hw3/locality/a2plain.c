@@ -8,10 +8,27 @@
 /* A2Methods_T that we implement.               */
 /************************************************/
 
+/*
+TO DO:
+- Double check with TA about part D in design doc
+
+- Ask TA about a2test.c/small_map_default
+
+- Maybe Test uarray2b.c (not important)
+
+- Check the unconditional jumps in valgrind for uarray2b.c
+
+- Start ppmtrans.c
+
+
+*/
+
+
+typedef A2Methods_UArray2 A2;
+
 static A2Methods_UArray2 new(int width, int height, int size)
 {
-        //TODO: Implement this function and remove the dummy return statement.
-        return NULL;
+        return UArray2_new(width, height, size);
 }
 
 static A2Methods_UArray2 new_with_blocksize(int width, int height, int size,
@@ -19,9 +36,37 @@ static A2Methods_UArray2 new_with_blocksize(int width, int height, int size,
 {
         //TODO: Implement this function and remove the dummy return statement.
         (void) blocksize;
-        return NULL;
+        return UArray2_new(width, height, size);
+
 }
 
+static void a2free(A2 * array2)
+{
+        UArray2_free((UArray2_T *) array2);
+}
+
+static int width(A2 array2)
+{
+        return UArray2_width(array2);
+}
+static int height(A2 array2)
+{
+        return UArray2_height(array2);
+}
+static int size(A2 array2)
+{
+        return UArray2_size(array2);
+}
+static int blocksize(A2 array2) //DO WE NEED BLOCKSIZE
+{
+        (void) array2;
+        return 1;
+}
+
+static A2Methods_Object *at(A2 array2, int i, int j)
+{
+        return UArray2_at(array2, i, j);
+}
 
 /* TODO: ...many more private (static) definitions follow */
 
@@ -74,11 +119,22 @@ static void small_map_col_major(A2Methods_UArray2        a2,
 static struct A2Methods_T uarray2_methods_plain_struct = {
         new,
         new_with_blocksize,
-        /* ... other functions follow in order,
-         *     with NULL for those not implemented ...
-         */
+        a2free,
+        width,
+        height,
+        size,
+        blocksize,
+        at,
+        map_row_major,
+        map_col_major,
+        NULL,
+        NULL,
+        small_map_row_major,
+        small_map_col_major,
+        NULL,
+        NULL,
 };
 
-// finally the payoff: here is the exported pointer to the struct
+/*finally the payoff: here is the exported pointer to the struct */
 
 A2Methods_T uarray2_methods_plain = &uarray2_methods_plain_struct;

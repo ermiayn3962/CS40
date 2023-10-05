@@ -25,72 +25,96 @@ void initializeBlocks(int col, int row, UArray2_T uArr2, void *elem, void *cl);
 void apply_freeUArrays(int col, int row, UArray2_T uArr2, void *elem, void *cl);
 
 
-
-int main(){
-
-    UArray2b_T test = UArray2b_new(9, 9, 3, 3);
-    assert(test->height == 9);
-    assert(test->blockSize == 3);
-    assert(test->width == 9);
-    assert(test->size == 3);
-    assert(test->blockData != NULL);
-
-    printf("This is the height: %i\n", UArray2b_height(test));
-    printf("Width is %d\n", UArray2b_width(test));
-    printf("Size is %d\n", UArray2b_size(test));
-    printf("BlockSize: %i\n", UArray2b_blocksize(test));
+void populate_cells(int col, int row, T array2b,
+                    void *elem, void *cl);
 
 
-    /* Populate UArray2b */
+// int main(){
+
+//     UArray2b_T test = UArray2b_new(9, 9, 3, 3);
+//     assert(test->height == 9);
+//     assert(test->blockSize == 3);
+//     assert(test->width == 9);
+//     assert(test->size == 3);
+//     assert(test->blockData != NULL);
+
+//     // printf("This is the height: %i\n", UArray2b_height(test));
+//     // printf("Width is %d\n", UArray2b_width(test));
+//     // printf("Size is %d\n", UArray2b_size(test));
+//     // printf("BlockSize: %i\n", UArray2b_blocksize(test));
+
+
+//     /* Populate UArray2b */
    
-    /* Loop through the blocks */
-    // for (int blockRow = 0; blockRow < UArray2_height(test->blockData); blockRow++) {
-    //     printf("blockRow: %i\n", blockRow);
-    //     for (int blockCol = 0; blockCol < UArray2_width(test->blockData); blockCol++) {
-    //         /* Loop through the entire span of data in a block */
-    //         printf("blockCol: %i\n", blockCol);
-    //         for (int i = 0; i < UArray2b_height(test); i++) {
-    //             printf("i: %i\n", i);
-    //             for (int j = 0; j < UArray2b_width(test); j++) {
-    //                 printf("j: %i\n", i);
+//     // /* Loop through the blocks */
+//     // int num = 0;
+//     // for (int row = 0; row < test->height/test->blockSize; row ++){
+//     //     for (int col = 0; col < test->width/test->blockSize; col ++) {
+//     //         UArray_T block = *(UArray_T *) UArray2_at(test->blockData, col / test->blockSize, row / test->blockSize);
+//     //         // (void) block;
+//     //         for (int k = 0; k < test->blockSize * test->blockSize; k++) {
+//     //             // printf("Index (using k): %i\n", k);
+//     //             //int *elem = (int *) UArray_at(*block, k);
+//     //             printf("num: %i\n", num);
+//     //             *(int *) UArray_at(block, k) = num;
 
-    //                 /* finding the row and columns in the block */
-    //                 int col = j - (test->blockSize * blockCol);
-    //                 int row = i - (test->blockSize * blockRow);
-    //                 //UArray_T *block = (UArray_T *) UArray2_at(test->blockData, j / test->blockSize, i / test->blockSize);
-    //                 // (void) block;
-    //                 printf("This is the index in uArray: %i\n",  row * test->blockSize + col);
-    //                 //UArray_at(*block, row * test->blockSize + col);
-    //             }
-    //         }
+//     //             printf("elem in UArray2b: %i\n", *(int *) UArray2b_at(test, col, row));
+//     //             printf("from UArray_at: %i\n", *(int *) UArray_at(block, k));
 
-    //     }
-    // }
+//     //             // *elem = num;
+//     //             num++;
+//     //             // printf("Index (using k): %i\n", k);
+//     //             // printf("Index (using math): %i\n", test->blockSize * (row % test->blockSize) + (col % test->blockSize));
 
 
-    for (int row = 0; row < test->height/test->blockSize; row ++){
-        for (int col = 0; col < test->width/test->blockSize; col ++) {
-            UArray_T *block = (UArray_T *) UArray2_at(test->blockData, col / test->blockSize, row / test->blockSize);
-            for (int k = 0; k < test->blockSize * test->blockSize; k++) {
-                printf("Index (using k): %i\n", k);
-                void *elem = UArray_at(*block, k);
-                (void) elem;
-                // printf("Index (using k): %i\n", k);
-                // printf("Index (using math): %i\n", test->blockSize * (row % test->blockSize) + (col % test->blockSize));
+//     //         }
+//     //         printf("\n");
+//     //         // printf("This is the block (%i, %i)\n", col / test->blockSize, row / test->blockSize);
+
+//     //     }
+//     // }
 
 
-            }
-            printf("\n");
-            // printf("This is the block (%i, %i)\n", col / test->blockSize, row / test->blockSize);
+//     // printf("This is the element at (4,5): %i\n", *(int *) UArray2b_at(test, 4, 5));
 
-        }
-    }
 
-    /* Print using block mapping */
+//     int num = 0;
+
+//     // printf("This is what's sent into the mapping function: %i\n", i);
+//     UArray2b_map(test, populate_cells, &num);
+//     printf("This is the element at (0,0): %i\n", *(int *) UArray2b_at(test, 0, 0));
+//     //*(int *) UArray2b_at(test, 0, 0) = 3;
+//     printf("This is the element at (6,4): %i\n", *(int *) UArray2b_at(test, 6, 4));
+
+//     printf("This is the element at (8,8): %i\n", *(int *) UArray2b_at(test, 8, 8));
 
     
-    UArray2b_free (&test);
-    printf("We work!\n");
+
+
+//     // UArray2b_new_64K_block(5, 7, 3);
+//     // UArray2b_new_64K_block(5, 7, 1024*64);
+
+//     /* Print using block mapping */
+
+    
+//     UArray2b_free (&test);
+//     printf("We work!\n");
+    
+
+// }
+
+void populate_cells(int col, int row, T array2b,
+                    void *elem, void *cl)
+{
+    // (void) col;
+    // (void) row;
+    // (void) array2b;
+    (void) elem;
+    // printf("This is the cl in apply function: %i\n", *(int *) cl);
+    *(int *)UArray2b_at(array2b, col, row)  = *(int *) cl;
+    //*(int *) elem = *(int *) cl;
+    printf("This is the elem in the uarr2b: %i\n", *(int *)UArray2b_at(array2b, col, row));
+    *(int *) cl = *(int *) cl + 1;
 
 }
 
@@ -124,8 +148,8 @@ UArray2b_T UArray2b_new (int width, int height, int size, int blockSize)
     uArr2b->blockData = UArray2_new(ceil((double) width / (double) blockSize),
                                         ceil((double) height/(double) blockSize), sizeof(UArray_T));
 
-    printf("UArray2 height %d\n", UArray2_height(uArr2b->blockData));
-    printf("UArray2 width %d\n", UArray2_width(uArr2b->blockData));
+    // printf("UArray2 height %d\n", UArray2_height(uArr2b->blockData));
+    // printf("UArray2 width %d\n", UArray2_width(uArr2b->blockData));
     //create UArray of blocksize * blocksize
     UArray2_map_row_major(uArr2b->blockData, initializeBlocks, &uArr2b);
    
@@ -140,6 +164,7 @@ void initializeBlocks(int col, int row, UArray2_T uArr2, void *elem, void *cl)
     int blockSize = temp->blockSize;
     int size = temp->size;
     *(UArray_T *) UArray2_at(uArr2, col, row) = UArray_new(blockSize * blockSize, size);
+    
 }
 
 
@@ -147,14 +172,23 @@ void initializeBlocks(int col, int row, UArray2_T uArr2, void *elem, void *cl)
 // /* new blocked 2d array: blocksize as large as possible provided
 // * block occupies at most 64KB (if possible)
 // */
-// T UArray2b_new_64K_block(int width, int height, int size) 
-// {
+T UArray2b_new_64K_block(int width, int height, int size)
+{
+    int blockSize;
+    if(size >= 1024 * 64) {
+        blockSize = 1;
+    }
+    else {
+        blockSize = ceil(sqrt((double)(1024 * 64)/(double) size));
+    }
+    //printf("blockSize: %i\n", blockSize);
+    return UArray2b_new (width, height, size, blockSize);
+}
 
-// }
 void UArray2b_free (T *array2b)
 {   
     assert(array2b != NULL && *array2b != NULL);
-    // UArray2_map_row_major((*array2b)->blockData, apply_freeUArrays, NULL);
+    UArray2_map_row_major((*array2b)->blockData, apply_freeUArrays, NULL);
     UArray2_free(&(*array2b)->blockData);
     free((*array2b)->blockData);
 
@@ -197,9 +231,20 @@ int UArray2b_blocksize(T array2b)
 // */
 void *UArray2b_at(T array2b, int col, int row)
 {
+    // printf("This is the passed col: %i\n", col);
+    // printf("This is the passed row: %i\n", row);
+
+    assert(array2b != NULL && col < array2b->width && row < array2b->height);
     /* Find the block in the UArray2b */
-    UArray_T block = *(UArray_T *) UArray2_at(array2b->blockData, col / array2b->blockSize, row / array2b->blockSize);
-    void *element = UArray_at(block, (array2b->blockSize * row) + col);
+    //printf("Block: (%d, %d)\n", col / array2b->blockSize, row / array2b->blockSize);
+    UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col / array2b->blockSize, row / array2b->blockSize);
+
+    //printf("Cell: %i\n", array2b->blockSize * col % array2b->blockSize + row % array2b->blockSize);
+    
+    void *element = UArray_at(*block, array2b->blockSize * (col % array2b->blockSize) + (row % array2b->blockSize));
+    //printf("elem: %i\n", *(int *)element);
+
+    //printf("elem: %i\n", *(int *)element);
 
     /* Within block call at to get cell */
     return element;
@@ -215,14 +260,34 @@ void UArray2b_map(T array2b,
     int width = array2b->width;
     int blockSize = array2b->blockSize;
     
-    for (int row = 0; row < height/blockSize; row ++){
+    for (int row = 0; row < height/blockSize; row ++){  // MIGHT HAVE TO ADD CEILING FUNCTION
         for (int col = 0; col < width/blockSize; col ++) {
-            UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col /blockSize, row / blockSize);
+            // UArray_T *block = (UArray_T *) UArray2_at(array2b->blockData, col /blockSize, row / blockSize);
+            // (void) block;
+            printf("Row: %i\n", row);
+            printf("Col: %i\n", col);
             for (int k = 0; k < blockSize * blockSize; k++) {
-                void *elem = UArray_at(*block, k);
-                apply(col, row, array2b, elem, cl);
+                int tinyRow = k/blockSize;
+                printf("tinyRow: %i\n", tinyRow);
+                int tinyCol = k % blockSize; //gets us tiny in 3x3
+                printf("tinyCol: %i\n", tinyCol);
+                
+                int bigBlockRow = row * blockSize + tinyRow;
+                printf("bigBlockRow: %i\n", bigBlockRow);
+
+                int bigBlockCol = col * blockSize + tinyCol;
+                printf("bigBlockCol: %i\n", bigBlockCol);
+
+
+                void *elem = UArray2b_at(array2b, bigBlockCol, bigBlockRow);
+                apply(bigBlockCol, bigBlockRow, array2b, elem, cl);
 
             }
+
+            // void *elem = UArray2b_at(array2b, col, row);
+            // apply(col, row, array2b, elem, cl);
+
+
 
         }
     }
