@@ -90,6 +90,11 @@ bool has_minimum_methods(A2Methods_T m)
 
 bool has_small_plain_methods(A2Methods_T m) 
 {
+        printf("This is default: %i\n", m->small_map_default != NULL);
+        printf("This is row: %i\n", m->small_map_row_major != NULL);
+
+        printf("This is col: %i\n", m->small_map_col_major != NULL);
+
         return m->small_map_default != NULL
                 && m->small_map_row_major != NULL
                 && m->small_map_col_major != NULL;
@@ -104,6 +109,9 @@ bool has_plain_methods(A2Methods_T m)
 
 bool has_small_blocked_methods(A2Methods_T m) 
 {
+        printf("This is default in blocked: %i\n", m->small_map_default != NULL);
+        printf("This is blocked: %i\n", m->small_map_default != NULL);
+        
         return m->small_map_default != NULL
                 && m->small_map_block_major != NULL;
 }
@@ -166,6 +174,7 @@ int main(int argc, char *argv[])
         assert(argc == 1);
         (void)argv;
         test_methods(uarray2_methods_plain);
+
         /*  test_methods(uarray2_methods_blocked); */
         printf("Passed.\n");  /* only if we reach this point without
                                * assertion failure
