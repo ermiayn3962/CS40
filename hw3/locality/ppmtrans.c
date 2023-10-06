@@ -30,6 +30,23 @@ usage(const char *progname)
         exit(1);
 }
 
+FILE *get_file_to_read(const char *file_name);
+void transform(Pnm_ppm image, int rotation, A2Methods_T methods);
+Pnm_ppm rotateNinety(Pnm_ppm source, A2Methods_T methods);
+void apply_rotateNinety(int col, int row, A2Methods_UArray2 UArr2, void *elem, void *cl);
+
+
+
+/*
+TO ASK:
+- How do we get the file from the command line? Will the file be the first item passed?
+        file should be at the end or beginning check this!
+- Is there a specfic order to the flags?
+        No
+- How do access the damn flags?
+
+
+*/
 int main(int argc, char *argv[]) 
 {
         char *time_file_name = NULL;
@@ -84,5 +101,94 @@ int main(int argc, char *argv[])
                 }
         }
 
-        assert(false);    // the rest of this function is not yet implemented
+        /* Opening and checking the image file */
+        FILE *fp = NULL;
+
+        printf("argc: %i\n", argc);
+        if (*argv[argc - 1] != '-' && argc > 1) {
+                fp = get_file_to_read(argv[1]);
+                assert(fp != NULL);
+
+        } else {
+                fp = get_file_to_read(NULL);
+                assert(fp != NULL);
+        }
+
+        /* testing */
+        if (fp == stdin) {
+                printf("works w/ stdin\n");
+
+        }
+        else {
+                printf("works w/ file\n");
+
+        }
+
+        /* Reading in image and making the struct to hold it */
+        Pnm_ppm image = Pnm_ppmread(fp, methods);
+        (void) image;
+
+
+
+        
+
+        //assert(false);    // the rest of this function is not yet implemented
+}
+
+
+
+
+FILE *get_file_to_read(const char *file_name)
+{
+        /* creates a FILE pointer */
+        FILE *file;
+
+        /* checks that the file exists and reads through stdin if not */
+        if (file_name != NULL) {
+                file = fopen(file_name, "rb");
+                assert(file != NULL);
+        } else {
+                file = stdin;
+                assert(file != NULL);
+        }
+    
+        return file;
+}
+
+void transform(Pnm_ppm image, int rotation, A2Methods_T methods)
+{
+        (void) image;
+        (void) methods;
+        if (rotation == 90) {
+                /* pixel (i, j) in the original becomes pixel (h − j − 1, i) in the rotated image. */
+                
+        } else if (rotation == 180) {
+                /* When the image is rotated 180 degrees, pixel (i, j) becomes pixel (w − i − 1, h − j − 1). */
+        } else { /* for 0 degree */
+                
+        }
+}
+
+
+Pnm_ppm rotateNinety(Pnm_ppm source, A2Methods_T methods)
+{
+        (void) methods;
+        A2Methods_T transformedImg = source->pixels;
+       // methods->map()
+        (void) transformedImg;
+}
+
+/* Apply function that rotates the image */
+void apply_rotateNinety(int col, int row, A2Methods_UArray2 UArr2, void *elem, void *cl)
+{
+        
+        Pnm_ppm img = cl;
+        int height = img->methods->height(img->pixels);
+        int newCol = height - row - 1;
+        int newRow = col;
+       // methods->at(A2 UArr2, newCol, newRow) = elem;
+        *(Pnm_rgb *) elem = *(Pnm_rgb *) img->methods->at(UArr2, newCol, newRow);
+
+
+        //Uarray2b at cl->blockdata 
 }
