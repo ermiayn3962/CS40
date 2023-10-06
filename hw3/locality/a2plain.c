@@ -1,5 +1,4 @@
 #include <string.h>
-
 #include <a2plain.h>
 #include "uarray2.h"
 
@@ -127,12 +126,13 @@ static struct A2Methods_T uarray2_methods_plain_struct = {
         at,
         map_row_major,
         map_col_major,
-        NULL,
-        NULL,
+        NULL,  //map_block_major
+        map_row_major,  //map default
         small_map_row_major,
         small_map_col_major,
         NULL,
-        NULL,
+        small_map_row_major,
+
 };
 
 /*finally the payoff: here is the exported pointer to the struct */
