@@ -8,28 +8,38 @@ static void apply_rotate180(int col, int row, A2Methods_UArray2 UArr2, void *ele
 
 static void apply_rotate90(int col, int row, A2Methods_UArray2 UArr2, void *elem, void *cl);
 
-static void rotate180(Pnm_ppm source, int rotation, A2Methods_T methods);
-
-static void rotate90(Pnm_ppm source, int rotation, A2Methods_T methods);
 
 
+void transform(Pnm_ppm source, int rotation, A2Methods_T methods)
+{       
 
-void transform(Pnm_ppm image, int rotation, A2Methods_T methods)
-{        
+        A2Methods_UArray2 transformedImg;
+        if (rotation != 0) {
+                transformedImg = createTransformed(source, rotation);
+        }
+
         if (rotation == 90) {
                 /* pixel (i, j) in the original becomes pixel (h − j − 1, i) in the rotated image. */
                 /* flip width and height */
-                rotate90(image, rotation, methods);
+
+                source->methods->map_default(transformedImg, apply_rotate90, source);
                 
         } else if (rotation == 180) {
                 /* keep width and height the same */
-               rotate180(image, rotation, methods);
+                source->methods->map_default(transformedImg, apply_rotate180, source);
+
                 /* When the image is rotated 180 degrees, pixel (i, j) becomes pixel (w − i − 1, h − j − 1). */
-        } else { /* for 0 degree */
-                printf("Inside zero\n");
-                FILE *fp = fopen("test3.ppm", "wb");
-                Pnm_ppmwrite(fp, image); 
         }
+        
+        if (rotation != 0) {
+                updateSource(&source, transformedImg, methods);
+        } 
+
+        FILE *fp = fopen("test180Mod4.ppm", "w");
+
+        Pnm_ppmwrite(fp, source);
+        fclose(fp);
+
 }
 
 A2Methods_UArray2 createTransformed(Pnm_ppm source, int rotation)
@@ -58,21 +68,6 @@ void updateSource(Pnm_ppm *source, A2Methods_UArray2 transformedImg, A2Methods_T
         (*source)->height = methods->height(transformedImg);
 }
 
-void rotate90(Pnm_ppm source, int rotation, A2Methods_T methods)
-{
-        A2Methods_UArray2 transformedImg = createTransformed(source, rotation);
-        
-        source->methods->map_default(transformedImg, apply_rotate90, source);
-
-        updateSource(&source, transformedImg, methods);
-
-        FILE *fp = fopen("test.ppm", "w");
-
-        Pnm_ppmwrite(fp, source);
-        fclose(fp);
-}
-
-
 
 /* Apply function that rotates the image */
 void apply_rotate90(int col, int row, A2Methods_UArray2 UArr2, void *elem, void *cl)
@@ -90,22 +85,6 @@ void apply_rotate90(int col, int row, A2Methods_UArray2 UArr2, void *elem, void 
 
 }
 
-
-void rotate180(Pnm_ppm source, int rotation, A2Methods_T methods)
-{
-        A2Methods_UArray2 transformedImg = createTransformed(source, rotation);
-        
-        source->methods->map_default(transformedImg, apply_rotate180, source);
-        
-        updateSource(&source, transformedImg, methods);
-
-        FILE *fp = fopen("test5.ppm", "w");
-
-        Pnm_ppmwrite(fp, source);
-        fclose(fp);
-
-}
-
 void apply_rotate180(int col, int row, A2Methods_UArray2 UArr2, void *elem, void *cl) 
 {
         (void) UArr2;
@@ -119,15 +98,3 @@ void apply_rotate180(int col, int row, A2Methods_UArray2 UArr2, void *elem, void
 
         *(Pnm_rgb) elem = *(Pnm_rgb) img->methods->at(img->pixels, ogCol, ogRow);
 }
-
-
-
-
-
-
-
-
-
-
-
-

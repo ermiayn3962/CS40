@@ -35,15 +35,9 @@ FILE *get_file_to_read(const char *file_name);
 
 
 
-/* 
-TO ASK
-- Why is our image tinted green?
-
-*/
-
 /*
 TODO:
-- Support the col major mapping
+- Time
 - Support input from stdin
 - Assert/Edge Cases
 - Style
@@ -73,6 +67,8 @@ int main(int argc, char *argv[])
                 } else if (strcmp(argv[i], "-col-major") == 0) {
                         SET_METHODS(uarray2_methods_plain, map_col_major, 
                                     "column-major");
+                        
+                        methods->map_default = methods->map_col_major;
                 } else if (strcmp(argv[i], "-block-major") == 0) {
                         SET_METHODS(uarray2_methods_blocked, map_block_major,
                                     "block-major");
