@@ -1,7 +1,7 @@
 #include <string.h>
 #include <a2plain.h>
 #include "uarray2.h"
-#include <stdio.h>
+
 /************************************************/
 /* Define a private version of each function in */
 /* A2Methods_T that we implement.               */
@@ -73,7 +73,6 @@ static void map_row_major(A2Methods_UArray2 uarray2,
                           A2Methods_applyfun apply,
                           void *cl)
 {   
-        printf("inside row\n");
         UArray2_map_row_major(uarray2, (UArray2_applyfun*)apply, cl);
 }
 
@@ -81,7 +80,6 @@ static void map_col_major(A2Methods_UArray2 uarray2,
                           A2Methods_applyfun apply,
                           void *cl)
 {
-        printf("inside col\n");
         UArray2_map_col_major(uarray2, (UArray2_applyfun*)apply, cl);
 }
 

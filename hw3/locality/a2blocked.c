@@ -2,7 +2,7 @@
 
 #include <a2blocked.h>
 #include "uarray2b.h"
-#include <stdio.h>
+
 // define a private version of each function in A2Methods_T that we implement
 
 typedef A2Methods_UArray2 A2;   // private abbreviation
@@ -48,7 +48,6 @@ typedef void applyfun(int i, int j, UArray2b_T array2b, void *elem, void *cl);
 
 static void map_block_major(A2 array2, A2Methods_applyfun apply, void *cl)
 {
-        printf("inside block major\n");
         UArray2b_map(array2, (applyfun *) apply, cl);
 }
 
