@@ -8,12 +8,12 @@ static void apply_rotate180(int col, int row, A2Methods_UArray2 UArr2, void *ele
 
 static void apply_rotate90(int col, int row, A2Methods_UArray2 UArr2, void *elem, void *cl);
 
-static void make_report(Pnm_ppm source, int rotation, double time_used, char *time_file_name);
+static void make_report(Pnm_ppm source, int rotation, double time_used, char *time_file_name, int mappingType);
 
 
 
 
-void transform(Pnm_ppm source, int rotation, A2Methods_T methods, char *time_file_name)
+void transform(Pnm_ppm source, int rotation, A2Methods_T methods, char *time_file_name, int mappingType)
 {       
 
         CPUTime_T timer;
@@ -49,7 +49,7 @@ void transform(Pnm_ppm source, int rotation, A2Methods_T methods, char *time_fil
         
 
         if (time_file_name != NULL) {
-                make_report(source, rotation, time_used, time_file_name);
+                make_report(source, rotation, time_used, time_file_name, mappingType);
         }
         
         Pnm_ppmwrite(stdout, source);
@@ -57,12 +57,24 @@ void transform(Pnm_ppm source, int rotation, A2Methods_T methods, char *time_fil
 
 }
 
-void make_report(Pnm_ppm source, int rotation, double time_used, char *time_file_name)
+void make_report(Pnm_ppm source, int rotation, double time_used, char *time_file_name, int mappingType)
 {
         FILE *timings_file = fopen(time_file_name, "a");
         double time_per_pixel = time_used / (source->height * source->width);
+
+        
         
         fprintf(timings_file, "Rotation: %i, Width: %i, Height: %i\n", rotation, source->width, source->height);
+        if (mappingType == 0) {
+                fprintf(timings_file, "Mapping Type: Row Major\n");
+                
+        } else if (mappingType == 1) {
+                fprintf(timings_file, "Mapping Type: Col Major\n");
+                
+        } else if (mappingType == 2) {
+                fprintf(timings_file, "Mapping Type: Block Major\n");
+                
+        }
         fprintf(timings_file, "Total Time (ns): %f\n", time_used);
         fprintf(timings_file, "Average Time Per Pixel (ns): %f\n", time_per_pixel);
         fprintf(timings_file, "\n");

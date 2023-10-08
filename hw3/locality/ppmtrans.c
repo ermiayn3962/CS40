@@ -9,6 +9,7 @@
 #include "a2blocked.h"
 #include "pnm.h"
 #include "transformations.h"
+#include "cputiming.h"
 
 #define SET_METHODS(METHODS, MAP, WHAT) do {                    \
         methods = (METHODS);                                    \
@@ -37,10 +38,9 @@ FILE *get_file_to_read(const char *file_name);
 
 /*
 TODO:
-- Time
-- Support input from stdin
 - Assert/Edge Cases
 - Style
+- README
 
 */
 
@@ -48,7 +48,6 @@ TODO:
 int main(int argc, char *argv[]) 
 {
         char *time_file_name = NULL;
-        (void)time_file_name;
         int   rotation       = 0;
         int   i;
 
@@ -60,6 +59,7 @@ int main(int argc, char *argv[])
         A2Methods_mapfun *map = methods->map_default; 
         assert(map);
 
+        int mappingType = 0;
         for (i = 1; i < argc; i++) {
                 if (strcmp(argv[i], "-row-major") == 0) {
                         SET_METHODS(uarray2_methods_plain, map_row_major, 
@@ -67,11 +67,12 @@ int main(int argc, char *argv[])
                 } else if (strcmp(argv[i], "-col-major") == 0) {
                         SET_METHODS(uarray2_methods_plain, map_col_major, 
                                     "column-major");
-                        
+                        mappingType = 1;
                         methods->map_default = methods->map_col_major;
                 } else if (strcmp(argv[i], "-block-major") == 0) {
                         SET_METHODS(uarray2_methods_blocked, map_block_major,
                                     "block-major");
+                        mappingType = 2;
                 } else if (strcmp(argv[i], "-rotate") == 0) {
                         if (!(i + 1 < argc)) {      /* no rotate value */
                                 usage(argv[0]);
@@ -89,6 +90,7 @@ int main(int argc, char *argv[])
                         }
                 } else if (strcmp(argv[i], "-time") == 0) {
                         time_file_name = argv[++i];
+
                 } else if (*argv[i] == '-') {
                         fprintf(stderr, "%s: unknown option '%s'\n", argv[0],
                                 argv[i]);
@@ -114,19 +116,10 @@ int main(int argc, char *argv[])
                 assert(fp != NULL);
         }
 
-        /* testing */
-        if (fp == stdin) {
-                //printf("works w/ stdin\n");
-
-        }
-        else {
-               // printf("works w/ file\n");
-
-        }
-
+        
         Pnm_ppm image = Pnm_ppmread(fp, methods);
         /* Reading in image and making the struct to hold it */
-        transform(image, rotation, methods);
+        transform(image, rotation, methods, time_file_name, mappingType);
 
         Pnm_ppmfree(&image);
         fclose(fp);
