@@ -1,0 +1,90 @@
+Names: Yoda Ermias (yermia01) and Maiah Islam (mislam07)
+Aspects Implemented: All.
+Time spent: 40 hours.
+Architecture: 
+    The UArray2B in our solution is represented as a UArray2, which is a UArray
+    of UArrays. What distinguishes a UArray2B from a regular UArray2 is the
+    presence of a blocksize. A UArray2B is sectioned into blocks (whose size
+    can be specified from the client or not). Blocks are represented as
+    UArrays, and each block is one element in the UArray2. This allows for
+    three different types of mapping: row major, column major, and block major,
+    the last of which is not present in a typical UArray2. PPMTrans uses a
+    UArray2B (called and created through a function pointer) to store the
+    pixels from a given image. 
+
+
+Part E Time Results:
+Image 1 (flowers.ppm)
+Rotation        Height  Width   Mapping Type
+1) 90       180     101     Col major   
+2) 90       180     101     Row major   
+3) 90       180     101     Block major 
+4) 180      101     180     Col major   
+5) 180      101     180     Row major   
+6) 180      101     180     Block major 
+7) 0        101     180     Col major   
+8) 0        101     180     Row major
+9) 0        101     180     Block major 
+
+Total Time(ns)  Time/Pixel(ns)  # Instructions/Pixel
+1) 725227           39.891474       3.98915E+18
+2) 604883           33.271892       3.32719E+18
+3) 1089266          59.915622       5.99156E+18
+4) 765094           42.084378       4.20844E+18
+5) 616800           33.927393       3.39274E+18
+6) 1117854          61.488119       6.14881E+18
+7) 823          0.04527         4.527E+15
+8) 846          0.04659         4.659E+15
+9) 1051         0.057811            5.7811E+15
+
+Image 2 (animals.ppm)                                           
+Rotation        Height  Width   Mapping Type    
+1) 90           400         300     Col major           
+2) 90           400         300     Row major           
+3) 90           400         300     Block major         
+4) 180          300         400     Col major          
+5) 180          300         400     Row major           
+6) 180          300         400     Block major         
+7) 0            300         400     Col major           
+8) 0            300         400     Row major           
+9) 0            300         400     Block major         
+
+Total Time(ns)  Time/Pixel(ns)  # Instructions/Pixel
+1) 5049013          42.075108       4.20751E+18
+2) 4656065          38.800542       3.88005E+18
+3) 7226802          60.22335        6.02234E+18
+4) 5490183          5.751525        4.57515E+18
+5) 4070933          33.924442       3.39244E+18
+6) 7052779          58.773158       5.87732E+18
+7) 1054         0.008783            878300000000000
+8) 825          0.006875            687500000000000
+9) 867          0.007225            722500000000000
+
+
+Computer Model: Apple MacBook Pro 2021 M1 
+CPU Type: Intel(R) Xeon(R) Silver 4214Y CPU @ 2.20GHz
+Clock Rate: 2194.844 MHz
+
+Discussion of Results:
+    For image 1's 90 degree rotations, row major had the fastest time per
+    pixel, but col major was not much slower. Block major, however, was
+    noticably slower with a time per pixel of 59.9 nanoseconds. The same
+    pattern appeared in image 2 for the 90 degree rotations as well, with row
+    major being the fastest and block major being the slowest. For image 1's
+    180 degree rotations, row major was again the fastest and block major was
+    the slowest. However in image 2's 180 degree rotations, column major was
+    significantly faster than both row and block major, with a time per pixel
+    of 5.75 nanoseconds. For image 1's 0 degree rotations, column major was the
+    fastest and block major was the slowest, but the difference was not as
+    large as the other rotations performed on this image. For image 2's 0
+    degree rotations, row major was the fastest and column major was the
+    slowest. Although there were a couple exceptions, for the most part row
+    major was the fastest way to map and block major was the slowest way to map
+    across both images, which means that plain arrays run faster than blocked
+    arrays. 
+
+    Image 1 and 2 are different sizes, with Image 2 being much larger than
+    image 1, but both have a similar number of instructions per pixel for 90
+    and 180 degree rotations. However, for 0 degree rotations, Image 2 had a
+    lower number of instructions per pixel because the time per pixel was
+    faster for all three types of mapping. 
