@@ -1,3 +1,17 @@
+/**************************************************************
+ *
+ *                     ppmtrans.c
+ *
+ *     Assignment: locality
+ *     Authors: Maiah Islam (mislam07) and Yoda Ermias (yermia01)
+ *     Date: Oct 8, 2023
+ * 
+ *     Calls the main function transform a given image and applies 
+ *     a user specified transformation to an inputted image.
+ *
+ *
+ **************************************************************/
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -32,17 +46,7 @@ usage(const char *progname)
         exit(1);
 }
 
-FILE *get_file_to_read(const char *file_name);
-
-
-
-/*
-TODO:
-- Assert/Edge Cases
-- Style
-- README
-
-*/
+static FILE *get_file_to_read(const char *file_name);
 
 
 int main(int argc, char *argv[]) 
@@ -91,6 +95,10 @@ int main(int argc, char *argv[])
                 } else if (strcmp(argv[i], "-time") == 0) {
                         time_file_name = argv[++i];
 
+                } else if (strcmp(argv[i], "-flip") == 0 || 
+                                strcmp(argv[i],"-transpose") == 0) {
+                        fprintf(stderr, "Unsupported flags\n");
+                        return EXIT_FAILURE;
                 } else if (*argv[i] == '-') {
                         fprintf(stderr, "%s: unknown option '%s'\n", argv[0],
                                 argv[i]);
@@ -106,8 +114,8 @@ int main(int argc, char *argv[])
         /* Opening and checking the image file */
         FILE *fp = NULL;
 
-       // printf("argc: %i\n", argc);
-        if (*argv[argc - 1] != '-' && argc > 1) {
+        /* Accounts for the edge case where -rotate <angle> is the last flag */
+        if (*argv[argc - 1] != '-' && argc > 1 && isalpha(argv[argc - 1][0])) {
                 fp = get_file_to_read(argv[argc - 1]);
                 assert(fp != NULL);
 
@@ -115,18 +123,33 @@ int main(int argc, char *argv[])
                 fp = get_file_to_read(NULL);
                 assert(fp != NULL);
         }
-
         
         Pnm_ppm image = Pnm_ppmread(fp, methods);
+
         /* Reading in image and making the struct to hold it */
         transform(image, rotation, methods, time_file_name, mappingType);
 
         Pnm_ppmfree(&image);
         fclose(fp);
         
-
+        return EXIT_SUCCESS;
 }
 
+
+/********** get_file_to_read ********
+ *
+ * Opens the file and checks for errors in opening.
+ * 
+ * Inputs:
+ *      - const char *file_name: the name of the file
+ *          
+ * Return: 
+ *      - A pointer to the opened file
+ *
+ * Notes: 
+ *      - May EXIT_FAILURE if file cannot be opened
+ *
+ ************************/
 FILE *get_file_to_read(const char *file_name)
 {
         /* creates a FILE pointer */
@@ -135,7 +158,11 @@ FILE *get_file_to_read(const char *file_name)
         /* checks that the file exists and reads through stdin if not */
         if (file_name != NULL) {
                 file = fopen(file_name, "rb");
-                assert(file != NULL);
+                if (file == NULL){
+                        fprintf(stderr, "File: %s, cannot be opened\n", 
+                                file_name);
+                        exit(EXIT_FAILURE);
+                }
         } else {
                 file = stdin;
                 assert(file != NULL);

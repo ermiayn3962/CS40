@@ -1,3 +1,17 @@
+/**************************************************************
+ *
+ *                     a2plain.c
+ *
+ *     Assignment: locality
+ *     Authors: Maiah Islam (mislam07) and Yoda Ermias (yermia01)
+ *     Date: Oct 8, 2023
+ * 
+ *     Define a private version of each function in A2Methods_T that we
+ *     implement.  
+ *
+ *
+ **************************************************************/
+
 #include <string.h>
 #include <a2plain.h>
 #include "uarray2.h"
@@ -6,21 +20,6 @@
 /* Define a private version of each function in */
 /* A2Methods_T that we implement.               */
 /************************************************/
-
-/*
-TO DO:
-- Double check with TA about part D in design doc
-
-- Ask TA about a2test.c/small_map_default
-
-- Maybe Test uarray2b.c (not important)
-
-- Check the unconditional jumps in valgrind for uarray2b.c
-
-- Start ppmtrans.c
-
-
-*/
 
 
 typedef A2Methods_UArray2 A2;
@@ -33,7 +32,6 @@ static A2Methods_UArray2 new(int width, int height, int size)
 static A2Methods_UArray2 new_with_blocksize(int width, int height, int size,
                                             int blocksize)
 {
-        //TODO: Implement this function and remove the dummy return statement.
         (void) blocksize;
         return UArray2_new(width, height, size);
 
@@ -56,7 +54,7 @@ static int size(A2 array2)
 {
         return UArray2_size(array2);
 }
-static int blocksize(A2 array2) //DO WE NEED BLOCKSIZE
+static int blocksize(A2 array2)
 {
         (void) array2;
         return 1;
@@ -66,8 +64,6 @@ static A2Methods_Object *at(A2 array2, int i, int j)
 {
         return UArray2_at(array2, i, j);
 }
-
-/* TODO: ...many more private (static) definitions follow */
 
 static void map_row_major(A2Methods_UArray2 uarray2,
                           A2Methods_applyfun apply,

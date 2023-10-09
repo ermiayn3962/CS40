@@ -49,7 +49,7 @@ INCLUDES = $(shell echo *.h)
 
 ############### Rules ###############
 
-all: ppmtrans a2test timing_test uarray2b
+all: ppmtrans a2test timing_test
 
 
 ## Compile step (.c files -> .o files)
@@ -67,7 +67,7 @@ a2test: a2test.o uarray2b.o uarray2.o a2plain.o
 timing_test: timing_test.o cputiming.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS) 
 
-ppmtrans: ppmtrans.o cputiming.o a2plain.o uarray2b.o uarray2.o a2blocked.o transformations.o
+ppmtrans: ppmtrans.o cputiming.o a2plain.o uarray2b.o uarray2.o a2blocked.o transformations.o 
 # will have to add timing test once we implement
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
