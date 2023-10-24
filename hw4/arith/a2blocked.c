@@ -3,6 +3,8 @@
 #include <a2blocked.h>
 #include "uarray2b.h"
 
+#include <stdio.h>
+
 // define a private version of each function in A2Methods_T that we implement
 
 typedef A2Methods_UArray2 A2;   // private abbreviation
