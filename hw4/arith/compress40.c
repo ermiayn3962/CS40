@@ -7,12 +7,13 @@
 #include <mem.h>
 
 #include "rgb_conversion.h"
-
-static Pnm_ppm openImage(FILE *input);
-static void trimImage(Pnm_ppm image);
+#include "image_manipulation.h"
+#include "vcs_conversion.h"
+#include "codeword.h"
 
 //testing functions
 void apply_printValues(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
+
 
 
 /* MAIN USED FOR TESTING PURPOSES */
@@ -23,23 +24,44 @@ int main()
 
     /* Testing the image opening function */
     Pnm_ppm testImg = openImage(fp);
+    int width = testImg->width;
+    int height = testImg->height;
+
     assert(testImg != NULL);
     printf("image opening works!\n"); 
 
-    /* Testing the trimming function */
-    printf("This is testImg height before: %u\n", testImg->height);
-    printf("This is testImg width before: %u\n", testImg->width);
-    trimImage(testImg);
-    printf("This is testImg height after: %u\n", testImg->height);
-    printf("This is testImg width after: %u\n", testImg->width);
+    /* Populating A2_and_Methods struct */
+    A2_and_Methods testArr;
+    NEW(testArr);
 
-    /* Testing the RGB to float conversion function */
-    RGB_to_float(testImg);
-    testImg->methods->map_default(testImg->pixels, apply_printValues, NULL);
+    testArr->array = testImg->pixels;
+    testArr->methods = (void *) testImg->methods;
+    testArr->denominator = testImg->denominator;
 
-    /* Testing the RGB to int conversion function */
-    RGB_to_int(testImg);
-    testImg->methods->map_default(testImg->pixels, apply_printValues, NULL);
+    
+    /* Testing the DCT conversions */
+    RGB_to_float(testArr);
+
+    RGB_to_VCS(testArr);
+
+    VCS_to_DCT(testArr);
+
+    encodeImage(testArr, width, height);
+
+    DCT_to_VCS(testArr);
+
+    VCS_to_RGB(testArr);
+
+    RGB_to_int(testArr);
+    testImg->pixels = testArr->array;
+    testImg->height = testArr->methods->height(testArr->array);
+    testImg->width = testArr->methods->width(testArr->array);
+
+    FILE *output = fopen("DCT_conversion_w-o_negs2.ppm", "w");
+    Pnm_ppmwrite(output, testImg); //ppmdiff output of 0.103126
+    fclose(output);
+
+    free(testArr);
 
 }
 
@@ -51,8 +73,15 @@ void compress40(FILE *input)
     Pnm_ppm image = openImage(input);
     assert(image != NULL);
 
-    /* Trimming image */
-    trimImage(image);
+    /* Create a UArray to Manipulate */
+
+    /* Populate */
+    // trimImage(image);
+    // array2 will have AV_VCS and will be Uarray2
+    // AnM will have VCS_DATA and will be blocked
+    // VCS_Average(AnM,  array2)
+    // DCT(AnM,  array2)
+
 
 
     printf("end of compress40\n");
@@ -66,44 +95,42 @@ void decompress40(FILE *input)
 }
 
 
-Pnm_ppm openImage(FILE *input) 
-{
-    A2Methods_T methods = uarray2_methods_blocked;
-    assert(methods != NULL);
-
-    Pnm_ppm image = Pnm_ppmread(input, methods);
-    assert(image != NULL);
-    return image;
-}
-
-void trimImage(Pnm_ppm image)
-{
-    unsigned height = image->height;
-    unsigned width = image->width;
-
-    /* Checking if height is even */
-    if ((height % 2) != 0) {
-        image->height = height - 1;
-    }
-    /* Checking if width is even */
-    if ((width % 2) != 0) {
-        image->width = width - 1;
-    }
-}
 
 
 
-void apply_printValues(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
-{  
-    (void) cl;
-    (void) i;
-    (void) j;
-    (void) array2;
 
-    Pnm_rgb pixel = elem;
-    printf("red: %u\n", pixel->red);
-    printf("green: %u\n", pixel->green);
-    printf("blue: %u\n", pixel->blue);
-    printf("\n");
 
-}
+
+// void apply_printValues(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
+// {  
+//     (void) cl;
+//     (void) i;
+//     (void) j;
+//     (void) array2;
+//     // (void) elem;
+
+//     // RGB_float pixel = elem;
+//     // printf("red: %f\n", pixel->red);
+//     // printf("green: %f\n", pixel->green);
+//     // printf("blue: %f\n", pixel->blue);
+//     // printf("\n");
+
+//     // DCT_data data = elem;
+//     // printf("a: %u\n", data->a);
+//     // printf("b: %i\n", data->b);
+//     // printf("c: %i\n", data->c);
+//     // printf("d: %i\n", data->d);
+//     // printf("Pb_avg: %u\n", data->PB_avg);
+//     // printf("Pr_avg: %u\n\n", data->PR_avg);
+
+//     VCS_avg averagedPixel = elem;
+//     printf("Y1: %f\n", averagedPixel->Y[0]);
+//     printf("Y2: %f\n", averagedPixel->Y[1]);
+//     printf("Y3: %f\n", averagedPixel->Y[2]);
+//     printf("Y4: %f\n", averagedPixel->Y[3]);
+//     printf("Pb_avg: %u\n", averagedPixel->PB_avg);
+//     printf("Pr_avg: %u\n\n", averagedPixel->PR_avg);
+
+//     // printf("(%i, %i)\n", j, i);
+
+// }
