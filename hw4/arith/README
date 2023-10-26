@@ -1,0 +1,73 @@
+-------------------------------------------------------------------------------
+|                                                                             |
+|                               ARITH README                                  |
+|                                                                             |
+-------------------------------------------------------------------------------
+
+Authors: Cooper Golemme (cgolem01), Yodahie Ermias (yermias01)
+
+******************
+* Arcitecture:   *
+******************
+
+        Our program contains 4 modules. First there is the module that opens a
+ppm file to be compressed and creates a UArray2b with the pixel data in the
+RGB colorspace. This module was extracted from the program for the sake of 
+modularity. Other files in the program did not need to know the file was opened
+or how the array was populated. The compression steps need only consider the
+UArray that is provided to it by another part of the program.
+        Following a similar logic, going now in the other direciton (from
+compressed code word string that represents an image to an image) we created
+another module that exports two functions. One of them is to write a UArray
+with data to code words and to output that, and the other is to read code 
+words from a file and create a UArray2 with data.
+        For the actual steps of compression and decompression, we broke our 
+code up into two modules based on the needs of each step. We grouped the 
+steps that require similar information together so that we could create 
+structs that are local to each module so that it doesn't muddle the logic 
+of steps that don't require those same data.
+        rgb_conversion module handles all the conversion steps from the
+rgb colorspace to the visual color space. This module exports two structs, a 
+VCS_data struct which represents a fully converted pixel in the image, and an
+rgb_data struct which represents a fully the origional representation of the
+pixel in the image.
+        vcs_conversions handles all conversions from vcs to the final data
+representations that will be sent to the codeword module to write the 
+compressed or decompressed data. vcs_conversions also exports 2 structs 
+representing the data flow in each direction. One is the DCT_data which is
+the final representation of the data before codeword creation, and VCS_avg
+which contains the average 2 by 2 pixel for each 2 by 2 group of pixels in 
+the image.
+        compress40 is the final module that handles all command line arguments
+and calls functions from each of the modules described to preform the desired
+functionality of the spec.
+        bitpack is a standalone module that was created and used to create code
+words that represent the data in the image. bitpack has functions that update
+a 64 bit int field with user specified bits and can retrieve bits from this int
+field.
+
+        Overall, the structure of the program is:
+
+        codeword --> vcs_conversion --> rgb_conversion --> image_manipulation
+         *                                                          |
+        / \                                                         |
+         |                                                         \ /
+         |                                                          *
+        codeword <-- vcs_conversion <-- rgb_conversion <-- image_manipulation
+
+*********************
+* Acknowledgements  *
+*********************
+1) TAs: Trevor 
+
+**************************
+* Correctly Implemented  *
+**************************
+
+We have correctly implemented all parts of the spec
+
+********
+* Time *
+********
+
+50 hrs

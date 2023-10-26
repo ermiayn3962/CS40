@@ -1,3 +1,16 @@
+/**************************************************************
+ *
+ *                     compress40.c
+ *
+ *     Assignment: arith
+ *     Authors: Cooper Golemme (cgolem01) and Yoda Ermias (yermia01)
+ *     Date: Oct 26, 2023
+ * 
+ *     Contains the functions to compress and decompress an image
+ *
+ *
+ **************************************************************/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <compress40.h>
@@ -11,126 +24,79 @@
 #include "vcs_conversion.h"
 #include "codeword.h"
 
-//testing functions
-void apply_printValues(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
-
-
-
-/* MAIN USED FOR TESTING PURPOSES */
-int main() 
-{
-    FILE *fp = fopen("flowers.ppm", "r");
-    assert(fp != NULL);
-
-    /* Testing the image opening function */
-    Pnm_ppm testImg = openImage(fp);
-    int width = testImg->width;
-    int height = testImg->height;
-
-    assert(testImg != NULL);
-    printf("image opening works!\n"); 
-
-    /* Populating A2_and_Methods struct */
-    A2_and_Methods testArr;
-    NEW(testArr);
-
-    testArr->array = testImg->pixels;
-    testArr->methods = (void *) testImg->methods;
-    testArr->denominator = testImg->denominator;
-
-    
-    /* Testing the DCT conversions */
-    RGB_to_float(testArr);
-
-    RGB_to_VCS(testArr);
-
-    VCS_to_DCT(testArr);
-
-    encodeImage(testArr, width, height);
-
-    DCT_to_VCS(testArr);
-
-    VCS_to_RGB(testArr);
-
-    RGB_to_int(testArr);
-    testImg->pixels = testArr->array;
-    testImg->height = testArr->methods->height(testArr->array);
-    testImg->width = testArr->methods->width(testArr->array);
-
-    FILE *output = fopen("DCT_conversion_w-o_negs2.ppm", "w");
-    Pnm_ppmwrite(output, testImg); //ppmdiff output of 0.103126
-    fclose(output);
-
-    free(testArr);
-
-}
-
-
+/* compress40
+ * Description: compresses an image passed 
+ * Input: input - ppm file to compress
+ * Output: writes plain text compression to stdout
+ * Details: calls each step of compression RGB_to_int, VCS_to_RGB, DCT_to_VCS,
+ *          encodeImage to compress ppm passed in to a plain text output that
+ *          represents the image in less bytes.
+ * Assertions: C.R.E. if image opening fails
+ *             All exceptions from submodules in DCT_to_VCS, VCS_to_RGB, 
+ *             RGB_to_int, and decodeImage
+ */
 void compress40(FILE *input)
 {
+        Pnm_ppm testImg = openImage(input);
+        assert(testImg != NULL);
 
-    /* Opening a PNM Image */
-    Pnm_ppm image = openImage(input);
-    assert(image != NULL);
+        A2_and_Methods arr_and_methods;
+        NEW(arr_and_methods);
+        assert(arr_and_methods != NULL);
 
-    /* Create a UArray to Manipulate */
+        arr_and_methods->array = testImg->pixels;
+        arr_and_methods->methods = (void *) testImg->methods;
+        int width = arr_and_methods->methods->width(arr_and_methods->array);
+        int height = arr_and_methods->methods->height(arr_and_methods->array);
 
-    /* Populate */
-    // trimImage(image);
-    // array2 will have AV_VCS and will be Uarray2
-    // AnM will have VCS_DATA and will be blocked
-    // VCS_Average(AnM,  array2)
-    // DCT(AnM,  array2)
+        RGB_to_float(arr_and_methods);
+        RGB_to_VCS(arr_and_methods);
+        VCS_to_DCT(arr_and_methods);
+        encodeImage(arr_and_methods, width, height);
 
-
-
-    printf("end of compress40\n");
+        arr_and_methods->methods->free(&arr_and_methods->array);
+        FREE(arr_and_methods);
+        Pnm_ppmfree(&testImg);
 }
 
-
-
+/* decompress40
+ * Description: Takes in a file input and runs all decompression steps. Outputs
+ *              a decompressed ppm image.
+ * Input: input - file to decompress
+ * Output: outputs ppm image to stdout
+ * Details: calls each step of decompression DCT_to_VCS, VCS_to_RGB, RGB_to_int
+ *          and creates a new Pnm_ppm and writes this to stdout
+ * Exceptions: Hanson C.R.E. if any memory allocation fails
+ *             All exceptions from submodules in DCT_to_VCS, VCS_to_RGB, 
+ *             RGB_to_int, and decodeImage
+ */
 void decompress40(FILE *input) 
 {
-    (void) input;
+        A2_and_Methods arr_and_methods;
+        NEW(arr_and_methods);
+        assert(arr_and_methods != NULL);
+
+        arr_and_methods->methods = uarray2_methods_blocked;
+
+        arr_and_methods->array = decodeImage(input);
+        DCT_to_VCS(arr_and_methods);
+        VCS_to_RGB(arr_and_methods);
+        RGB_to_int(arr_and_methods);
+
+        Pnm_ppm image;
+        NEW(image);
+        assert(image);
+        
+        image->pixels = arr_and_methods->array;
+        image->methods = arr_and_methods->methods;
+        image->height = arr_and_methods->methods->height(
+                                                arr_and_methods->array);
+        image->width = arr_and_methods->methods->width(
+                                                arr_and_methods->array);
+        image->denominator = 255;
+        
+        Pnm_ppmwrite(stdout, image);
+
+        Pnm_ppmfree(&image);
+        FREE(arr_and_methods);
 }
-
-
-
-
-
-
-
-
-// void apply_printValues(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
-// {  
-//     (void) cl;
-//     (void) i;
-//     (void) j;
-//     (void) array2;
-//     // (void) elem;
-
-//     // RGB_float pixel = elem;
-//     // printf("red: %f\n", pixel->red);
-//     // printf("green: %f\n", pixel->green);
-//     // printf("blue: %f\n", pixel->blue);
-//     // printf("\n");
-
-//     // DCT_data data = elem;
-//     // printf("a: %u\n", data->a);
-//     // printf("b: %i\n", data->b);
-//     // printf("c: %i\n", data->c);
-//     // printf("d: %i\n", data->d);
-//     // printf("Pb_avg: %u\n", data->PB_avg);
-//     // printf("Pr_avg: %u\n\n", data->PR_avg);
-
-//     VCS_avg averagedPixel = elem;
-//     printf("Y1: %f\n", averagedPixel->Y[0]);
-//     printf("Y2: %f\n", averagedPixel->Y[1]);
-//     printf("Y3: %f\n", averagedPixel->Y[2]);
-//     printf("Y4: %f\n", averagedPixel->Y[3]);
-//     printf("Pb_avg: %u\n", averagedPixel->PB_avg);
-//     printf("Pr_avg: %u\n\n", averagedPixel->PR_avg);
-
-//     // printf("(%i, %i)\n", j, i);
-
-// }
