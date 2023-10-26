@@ -5,18 +5,42 @@
 #include <mem.h>
 #include <assert.h>
 
-
+/*  VCS_avg
+*   Represents data from 2x2 grid of image. Intermediate step from VCS_avg_cell
+*   to DCT_data.
+*   Y - an array of 4 Y values as floats where Y[0] = (0, 0), Y[1], (1, 0)
+*       Y[0] = (0, 0), Y[1] = (1, 0), Y[2] = (1, 1), where (col, row) of 2x2
+*       block of image.
+*   PB_avg - average PB for 2x2 grid of image (scaled, quantized average)
+*   PR_avg - average PR for 2x2 grid of image (scaled, quantized average)
+*/
 // typedef struct VCS_avg {
 //     float Y[4];
 //     unsigned PB_avg, PR_avg;
 // } *VCS_avg;
 
+/*  DCT_data
+*   Represents data from 2x2 grid of image. Final data representation before
+*   encoding.
+*   a - A value from DCT conversion, scaled to 9 bit signed int
+*   b - B value from DCT conversion, scaled to 5 bit unsigned it
+*   c - C value from DCT conversion, scaled to 5 bit unsigned it
+*   d - D value from DCT conversion, scaled to 5 bit unsigned it
+*   PB_avg - average PB, scaled to a 4 bit unsigned int
+*   PR_avg - average PR, scaled to a 4 bit unsigned int
+*/
 // typedef struct DCT_data{
 //     unsigned a;
 //     signed b, c, d;
 //     unsigned PB_avg, PR_avg;
 // } *DCT_data;
 
+/*  VCS_avg_cell
+*   Represents a single pixel of the image
+*   Y - Y value of pixel
+*   PB_avg - average PB for 2x2 grid of image (raw average i.e float)
+*   PR_avg - average PR for 2x2 grid of image (raw average i.e float)
+*/
 typedef struct VCS_avg_cell {
     float Y;
     float PB_avg, PR_avg;
@@ -24,26 +48,22 @@ typedef struct VCS_avg_cell {
 
 static void VCS_average(A2_and_Methods arr_and_meth);
 
-static void apply_populateUArray2(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
+// static void apply_populateUArray2(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
 static void apply_VCS_average(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
 static void apply_VCS_to_DCT(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
 static void apply_DCT_to_VCS(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
 
 static int quantize(float val);
 static float reverse_quantize (signed x);
-static float mapToRange(float val, float minRange, float maxRange);
+// static float mapToRange(float val, float minRange, float maxRange);
 void apply_print(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
-static VCS_avg createAverage(VCS_data *pixeldata);
+static VCS_avg create_average(VCS_data *pixeldata);
 
 
 static A2Methods_UArray2 createUArray2(A2_and_Methods arr_and_meth, int size);
 
 /*
         TO DO
-
-- Create DCT_to_VCS function
-
-- Create a function that bounds values in a specified range
 
 - Free Memory
 
@@ -181,6 +201,17 @@ void apply_DCT_to_VCS(int i, int j, A2Methods_UArray2 vcs_array, void *elem, voi
                                                        outer_i,
                                                        outer_j);
             pixel->Y = Y[cell];
+            // fprintf(stderr, "PB_avg: %u\n", blockData->PB_avg);
+            // fprintf(stderr, "PR_avg: %u\n", blockData->PR_avg);
+
+
+            if (blockData->PB_avg > 15){
+                blockData->PB_avg = 15;
+            }
+            if (blockData->PR_avg > 15){
+                blockData->PR_avg = 15;
+            }
+          
             pixel->PB_avg = Arith40_chroma_of_index(blockData->PB_avg);
             pixel->PR_avg = Arith40_chroma_of_index(blockData->PR_avg);
         }
@@ -189,55 +220,84 @@ void apply_DCT_to_VCS(int i, int j, A2Methods_UArray2 vcs_array, void *elem, voi
     // FREE(blockData);
 }
 
-void VCS_to_DCT(A2_and_Methods arr_and_meth)
+/* VCS_average
+ * Description: converts VCS_data to DCT_data for each VCS_data in 
+ *              vcs_pixel_array by calling VCS_average to first convert VCS_data
+ *              to VCS_avg.
+ * Input: vcs_pixel_array - array with VCS_data elements
+ * Output: none -- changes vcs_pixel_array
+ * Changes: vcs_pixel array goes from dimenstions height * width to height / 2 
+ *          * width / 2. The data inside vcs_pixel_array goes from VCS_data 
+ *          structs to DCT_data structs.
+ */
+void VCS_to_DCT(A2_and_Methods vcs_pixel_array)
 {
-    // arr_and_meth->methods->map_default(arr_and_meth->array, apply_print, NULL);
-     printf("height of vcs_data: %i\n", arr_and_meth->methods->height(arr_and_meth->array));
-     printf("width of vcs_data: %i\n", arr_and_meth->methods->width(arr_and_meth->array));
+    // vcs_pixel_array->methods->map_default(vcs_pixel_array->array, apply_print, NULL);
+    //  printf("height of vcs_data: %i\n", vcs_pixel_array->methods->height(vcs_pixel_array->array));
+    //  printf("width of vcs_data: %i\n", vcs_pixel_array->methods->width(vcs_pixel_array->array));
     //get averages of the VCS_data
-    VCS_average(arr_and_meth);
-    // arr_and_meth->methods->map_default(arr_and_meth->array, apply_print, NULL);
+    VCS_average(vcs_pixel_array);
+    // vcs_pixel_array->methods->map_default(vcs_pixel_array->array, apply_print, NULL);
 
     // //Create a UArray of DCT_Data structs
-    A2Methods_UArray2 dct_array = createUArray2(arr_and_meth, sizeof(struct DCT_data));
+    A2Methods_UArray2 dct_array = createUArray2(vcs_pixel_array, sizeof(struct DCT_data));
 
     
-    //Map through dct_array and populating it with converted values from arr_and_meth->array
-    arr_and_meth->methods->map_default(dct_array, apply_VCS_to_DCT, arr_and_meth);
-    // arr_and_meth->methods->map_default(dct_array, apply_print, NULL);
+    //Map through dct_array and populating it with converted values from vcs_pixel_array->array
+    vcs_pixel_array->methods->map_default(dct_array, apply_VCS_to_DCT, vcs_pixel_array);
+    // vcs_pixel_array->methods->map_default(dct_array, apply_print, NULL);
 
-    // //Replacing arr_and_meth->array with the dct_array
-    // FREE(arr_and_meth->array);
-    arr_and_meth->array = dct_array;
+    // //Replacing vcs_pixel_array->array with the dct_array
+    // FREE(vcs_pixel_array->array);
+    vcs_pixel_array->array = dct_array;
     
 
 }
 
-void VCS_average(A2_and_Methods arr_and_meth)
+/* VCS_average
+ * Description: converts VCS_data to VCS_avg for each VCS_data in 
+ *              vcs_pixel_array
+ * Input: vcs_pixel_array - array with VCS_data elements
+ * Output: none -- changes vcs_pixel_array
+ * Changes: vcs_pixel array goes from dimenstions height * width to height / 2 
+ *          * width / 2. The data inside vcs_pixel_array goes from VCS_data 
+ *          structs to VCS_avg structs.
+ */
+void VCS_average(A2_and_Methods vcs_pixel_array)
 {
-    A2Methods_UArray2 vcs_averages = createUArray2(arr_and_meth, sizeof(struct VCS_avg));
-    assert(vcs_averages != NULL);
-
-    // arr_and_meth->methods->map_default(arr_and_meth->array, apply_print, NULL);
-    arr_and_meth->methods->map_default(vcs_averages, apply_VCS_average, arr_and_meth);
-    // arr_and_meth->methods->map_default(vcs_averages, apply_print, NULL);
-    
-    // FREE(arr_and_meth->array);
-    arr_and_meth->array = vcs_averages;
+    A2Methods_UArray2 vcs_averages = createUArray2(vcs_pixel_array,
+                                                   sizeof(struct VCS_avg));
+    vcs_pixel_array->methods->map_default(vcs_averages,
+                                          apply_VCS_average,
+                                          vcs_pixel_array);
+    vcs_pixel_array->array = vcs_averages;
 }
 
+/* apply_VCS_average
+ * Description: converts VCS_data in UArray2 passed in through the closure 
+                to VCS_avg structs in the UArray2 this function is 
+                called on.
+ * Inputs: i: column index for elem in UArray2 at current iteration of apply
+ *         j: row index for elem in UArray2 at current iteration of apply
+ *         uarray2: unused (for matching apply function parameters)
+ *         elem: element of array2 at current iteration of apply
+ *         cl: closure argument, uarray2 with VCS_data pixel data.
+ * Outputs: None -- updates source uarray2 with DCT data.
+ * Notes: Calculates average Pb and Pr values for each pixel in a 2x2 block in 
+ *        image. Also stores all 4 Y values for future converstion using DCT 
+ *        step.
+ */
 void apply_VCS_average(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
 {
     (void) array2;
-    (void) elem;
 
     VCS_avg averagedPixel = elem;
 
-    A2_and_Methods arr_and_meth = cl;
+    A2_and_Methods vcs_array = cl;
 
-    int h = arr_and_meth->methods->height(arr_and_meth->array);
-    int w = arr_and_meth->methods->width(arr_and_meth->array);
-    int b = arr_and_meth->methods->blocksize(arr_and_meth->array);
+    int h = vcs_array->methods->height(vcs_array->array);
+    int w = vcs_array->methods->width(vcs_array->array);
+    int b = vcs_array->methods->blocksize(vcs_array->array);
     int len = 4;
   
     /* Mapping from the 1 x 1 blocked UArray2 to the 2 x 2 blocked UArray2 */
@@ -250,20 +310,19 @@ void apply_VCS_average(int i, int j, A2Methods_UArray2 array2, void *elem, void 
         int outer_j = j0 + cell % b;
 
         if (outer_i < w && outer_j < h) {
-            VCS_data vcs_pixel = arr_and_meth->methods->at(arr_and_meth->array, 
+            VCS_data vcs_pixel = vcs_array->methods->at(vcs_array->array, 
                                                            outer_i,
                                                            outer_j);
             pixels_in_block[cell] = vcs_pixel;
         }
     }
-    *averagedPixel = *createAverage(pixels_in_block);
+    *averagedPixel = *create_average(pixels_in_block);
 }
 
-// takes in a array of pixels and computes the average pixel
-//  FREEs the pixels
-// Quantizes it
-// WORKS !!!!
-VCS_avg createAverage(VCS_data *pixeldata)
+/* create_average
+ *
+ */
+VCS_avg create_average(VCS_data *pixeldata)
 {
     VCS_avg averagePixel;
     NEW(averagePixel);
@@ -277,12 +336,26 @@ VCS_avg createAverage(VCS_data *pixeldata)
         // FREE(pixeldata);
     }
 
-    averagePixel->PB_avg = Arith40_index_of_chroma(mapToRange(sumPb / 4.0, -0.5, 0.5));
+    averagePixel->PB_avg = Arith40_index_of_chroma(sumPb / 4.0);
+    //mapToRange(sumPb / 4.0, -0.5, 0.5)
 
-    averagePixel->PR_avg = Arith40_index_of_chroma(mapToRange(sumPr / 4.0, -0.5, 0.5));
+    averagePixel->PR_avg = Arith40_index_of_chroma(sumPr / 4.0);
     return averagePixel;
 }
 
+/* apply_VCS_to_DCT
+ * Description: converts VCS_avg in UArray2 passed in through the closure 
+                argument to DCT_data structs in the UArray2 this function is 
+                called on.
+ * Inputs: i: column index for elem in UArray2 at current iteration of apply
+ *         j: row index for elem in UArray2 at current iteration of apply
+ *         uarray2: unused (for matching apply function parameters)
+ *         elem: element of array2 at current iteration of apply
+ *         cl: closure argument, uarray2 with VCS_avg pixel data.
+ * Outputs: None -- updates source uarray2 with DCT data.
+ * Notes: Converts using discrete cosign transformation to represent 4 Y values 
+ *        as values: a, b, c, d
+ */
 void apply_VCS_to_DCT(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
 {
     (void) array2;
@@ -329,6 +402,12 @@ void apply_VCS_to_DCT(int i, int j, A2Methods_UArray2 array2, void *elem, void *
     dct_pixel->b = b;
     dct_pixel->c = c;
     dct_pixel->d = d;
+    // if (averagedPixel->PB_avg > 15 || averagedPixel->PR_avg > 15){
+
+    // fprintf(stderr, "PB_Avg in encode: %u\n", averagedPixel->PB_avg);
+    // fprintf(stderr, "PR_Avg in encode: %u\n", averagedPixel->PR_avg);
+    // }
+
 
     dct_pixel->PB_avg = averagedPixel->PB_avg;
     dct_pixel->PR_avg = averagedPixel->PR_avg;
@@ -336,80 +415,99 @@ void apply_VCS_to_DCT(int i, int j, A2Methods_UArray2 array2, void *elem, void *
     // FREE(averagedPixel);
 }
 
-A2Methods_UArray2 createUArray2(A2_and_Methods arr_and_meth, int size)
+A2Methods_UArray2 createUArray2(A2_and_Methods source, int size)
 {
-    int blocksize = arr_and_meth->methods->blocksize(arr_and_meth->array);
+    int blocksize = source->methods->blocksize(source->array);
 
-    int width = arr_and_meth->methods->width(arr_and_meth->array);
+    int width = source->methods->width(source->array);
     width = (width  + blocksize - 1) / blocksize;
 
-    int height = arr_and_meth->methods->height(arr_and_meth->array);
+    int height = source->methods->height(source->array);
     height = (height  + blocksize - 1) / blocksize;
 
-    A2Methods_UArray2 VCS_averages = arr_and_meth->methods->new_with_blocksize(width, height, size, 1);
-    assert(VCS_averages);
+    A2Methods_UArray2 new_array = source->methods->new_with_blocksize(width, 
+                                                                      height,
+                                                                      size, 
+                                                                      1);
+    assert(new_array != NULL);
 
-    arr_and_meth->methods->map_default(VCS_averages, apply_populateUArray2, NULL);
 
-    return VCS_averages;
+    // source->methods->map_default(new_array, apply_populateUArray2, NULL);
+
+    return new_array;
 }
+// /* apply_populateUArray2
+//  *
+//  *
+//  */
+// void apply_populateUArray2(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
+// {
+//     (void) i; (void) j; (void) array2; (void) cl;
 
-void apply_populateUArray2(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
-{
-    (void) i; (void) j; (void) array2; (void) cl;
+//     VCS_avg cell = elem;
+//     NEW(cell);
+//     assert(cell != NULL);
+// }
 
-    VCS_avg cell = elem;
-    NEW(cell);
-    assert(cell != NULL);
-}
-
+/* mapToRange
+ * Description: bounds value to being between minRange and maxRange by rounding 
+ *              values greater than the maxRange down to maxRange and values 
+ *              less than the minRange down to the minRange. For floats
+ * Inputs: val - value to bound
+ *         minRange - minimum value that value can be
+ *         maxRange - maximum value that value can be
+ * Outputs: bounded floatvalue between [minRange, maxRange]
+ */
 float mapToRange(float val, float minRange, float maxRange)
 {
     if (val >= maxRange){
-        printf("\ninside max range\n");
         return maxRange;
     }
     else if (val <= minRange){
-        printf("\ninside min range\n");
-
         return minRange;
     }
-    // (-range) + (val + range) * (1.0 / (range * 2.0))
     return val;
 }
 
-// signed quantize(float val, float minRange, float maxRange, int quantizeVal)
-// {
-//     float scaledVal = mapToRange(val, minRange, maxRange);
-//     // printf("This is the scaled: %f\n", scaledVal);
-//     // return round(scaledVal * (((1 << (bit_width - 1)) - 1) / maxRange));
-//     // printf("(int) scaledVal * quantizeVal = %i\n", (int)(scaledVal * quantizeVal));
-//     printf("(signed) scaledVal * quantizeVal = %d\n\n",(signed) (round(scaledVal * quantizeVal)) );
-
-//     if ((signed) (round(scaledVal * quantizeVal)) > quantizeVal){
-         
-//     }
-
-//     return round(scaledVal * quantizeVal);
-// }
-
+/* quantize
+ * Description: Takes in a float and bounds its range to [-0.3, 0.3]
+ *              then returns a 5 bit signed integer representing the float 
+ * Input: a float
+ * Output: an int ranging from [-15, 15]
+ */
 static signed quantize (float x)
 {
     float min = -0.3;
     float max = 0.3;
 
 
-    if (x > max){
-        x = max;
+    if (x > max) {
+       return 15;
     }
-    else if (x < min){
-        x = min;
+    else if (x < min) {
+       return -15;
     }
-    return round ((x * 104) - 0.1);
+    return round ((x * 50));
 }
 
+/* reverse_quantize
+ * Description: bounds integer to [-15, 15] and then returns a float 
+ *              corresponding to a value in this range from [-0.3, 0.3]
+ * Input: an int
+ * Output: a float ranging from [-0.3, 0.3]
+ */
 static float reverse_quantize (signed x)
 {
-        return (x + 0.1) / 104;
+        signed min = -15;
+        signed max = 15;
+
+
+        if (x > max) {
+            return 0.3;
+        }
+        else if (x < min) {
+            return -0.3;
+        }
+        return (x) / 50.0;
 }
 

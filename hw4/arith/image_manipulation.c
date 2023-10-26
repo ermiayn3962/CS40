@@ -26,7 +26,6 @@ void trimImage(int *width, int *height)
 
 A2Methods_UArray2 initializeUArray2(A2_and_Methods arr_and_meth, int size, int blocksize)
 {
-    printf("This is the int size: %i\n", size);
     // printf("This is the int size: printed as unsigned %lu\n", size);
 
     assert(arr_and_meth != NULL);
@@ -37,7 +36,6 @@ A2Methods_UArray2 initializeUArray2(A2_and_Methods arr_and_meth, int size, int b
     trimImage(&width, &height);
 
     A2Methods_UArray2 newArray = arr_and_meth->methods->new_with_blocksize(width, height, size, blocksize);
-    printf("This is the blocksize after creation: %i\n", arr_and_meth->methods->blocksize(newArray));
     assert(newArray != NULL);
 
     return newArray;

@@ -11,18 +11,6 @@ static void apply_VCS_to_RGB(int i, int j, A2Methods_UArray2 array2, void *elem,
 static void apply_RGB_to_int(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
 static void apply_RGB_to_float(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
 static int checkDenom(int val);
-// static float round_to_range (float num, float lo, float hi);
-
-
-// static float round_to_range (float num, float lo, float hi)
-// {
-//         if (num < lo) {
-//                 num = lo;
-//         } else if (num > hi) {
-//                 num = hi;   
-//         }
-//         return num;
-// }
 
 void RGB_to_float(A2_and_Methods arr_and_meth) 
 {
@@ -88,16 +76,12 @@ void apply_RGB_to_int(int i, int j, A2Methods_UArray2 array2, void *elem, void *
     RGB_float pixel_float = source->methods->at(source->array, i, j);
     Pnm_rgb pixel_int = elem;
 
-    unsigned denominator = source->denominator;
+    unsigned denominator = 255;
     
     
     float red = pixel_float->red * denominator;
     float green = pixel_float->green * denominator;
     float blue = pixel_float->blue * denominator;
-    printf("color r: %f\n", red);
-    printf("color g: %f\n", green);
-    printf("color b: %f\n", blue);
-    
 
 
 
@@ -146,8 +130,6 @@ void apply_RGB_to_VCS(int i, int j, A2Methods_UArray2 array2, void *elem, void *
 
 void VCS_to_RGB(A2_and_Methods arr_and_meth)
 {
-
-    printf("VCS_to_RGB UArray\n");
 
     A2Methods_UArray2 RGB_float_arr = initializeUArray2(arr_and_meth, sizeof(struct RGB_float), 2);
 
