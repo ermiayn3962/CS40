@@ -1,3 +1,16 @@
+/**************************************************************
+ *
+ *                     compress40.c
+ *
+ *     Assignment: arith
+ *     Authors: Cooper Golemme (cgolem01) and Yoda Ermias (yermia01)
+ *     Date: Oct 26, 2023
+ * 
+ *     Contains the functions to compress and decompress an image
+ *
+ *
+ **************************************************************/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <compress40.h>
@@ -11,118 +24,79 @@
 #include "vcs_conversion.h"
 #include "codeword.h"
 
-//testing functions
-void apply_printValues(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl);
-
-
-
-// /* MAIN USED FOR TESTING PURPOSES */
-// int main() 
-// {
-    
-
-    
-
-//     // free(testArr);
-
-// }
-
-
+/* compress40
+ * Description: compresses an image passed 
+ * Input: input - ppm file to compress
+ * Output: writes plain text compression to stdout
+ * Details: calls each step of compression RGB_to_int, VCS_to_RGB, DCT_to_VCS,
+ *          encodeImage to compress ppm passed in to a plain text output that
+ *          represents the image in less bytes.
+ * Assertions: C.R.E. if image opening fails
+ *             All exceptions from submodules in DCT_to_VCS, VCS_to_RGB, 
+ *             RGB_to_int, and decodeImage
+ */
 void compress40(FILE *input)
 {
-    Pnm_ppm testImg = openImage(input);
-    assert(testImg != NULL);
+        Pnm_ppm testImg = openImage(input);
+        assert(testImg != NULL);
 
-    /* Populating A2_and_Methods struct */
-    A2_and_Methods testArr;
-    NEW(testArr);
+        A2_and_Methods arr_and_methods;
+        NEW(arr_and_methods);
+        assert(arr_and_methods != NULL);
 
-    testArr->array = testImg->pixels;
-    testArr->methods = (void *) testImg->methods;
-    testArr->denominator = testImg->denominator;
+        arr_and_methods->array = testImg->pixels;
+        arr_and_methods->methods = (void *) testImg->methods;
+        int width = arr_and_methods->methods->width(arr_and_methods->array);
+        int height = arr_and_methods->methods->height(arr_and_methods->array);
 
-    
-    /* Testing the DCT conversions */
-    RGB_to_float(testArr);
-    int width = testArr->methods->width(testArr->array);
-    int height = testArr->methods->height(testArr->array);
+        RGB_to_float(arr_and_methods);
+        RGB_to_VCS(arr_and_methods);
+        VCS_to_DCT(arr_and_methods);
+        encodeImage(arr_and_methods, width, height);
 
-
-    RGB_to_VCS(testArr);
-    VCS_to_DCT(testArr);
-    encodeImage(testArr, width, height);
+        arr_and_methods->methods->free(&arr_and_methods->array);
+        FREE(arr_and_methods);
+        Pnm_ppmfree(&testImg);
 }
 
-
-
+/* decompress40
+ * Description: Takes in a file input and runs all decompression steps. Outputs
+ *              a decompressed ppm image.
+ * Input: input - file to decompress
+ * Output: outputs ppm image to stdout
+ * Details: calls each step of decompression DCT_to_VCS, VCS_to_RGB, RGB_to_int
+ *          and creates a new Pnm_ppm and writes this to stdout
+ * Exceptions: Hanson C.R.E. if any memory allocation fails
+ *             All exceptions from submodules in DCT_to_VCS, VCS_to_RGB, 
+ *             RGB_to_int, and decodeImage
+ */
 void decompress40(FILE *input) 
 {
-    A2_and_Methods testArr;
-    NEW(testArr);
+        A2_and_Methods arr_and_methods;
+        NEW(arr_and_methods);
+        assert(arr_and_methods != NULL);
 
-    testArr->methods = uarray2_methods_blocked;
-    testArr->array = decodeImage(input);
-    // testArr->methods->map_default(testArr->array, apply_printValues, NULL);
+        arr_and_methods->methods = uarray2_methods_blocked;
 
-    DCT_to_VCS(testArr);
-    // testArr->methods->map_default(testArr->array, apply_printValues, NULL);
+        arr_and_methods->array = decodeImage(input);
+        DCT_to_VCS(arr_and_methods);
+        VCS_to_RGB(arr_and_methods);
+        RGB_to_int(arr_and_methods);
 
+        Pnm_ppm image;
+        NEW(image);
+        assert(image);
+        
+        image->pixels = arr_and_methods->array;
+        image->methods = arr_and_methods->methods;
+        image->height = arr_and_methods->methods->height(
+                                                arr_and_methods->array);
+        image->width = arr_and_methods->methods->width(
+                                                arr_and_methods->array);
+        image->denominator = 255;
+        
+        Pnm_ppmwrite(stdout, image);
 
-
-    VCS_to_RGB(testArr);
-    RGB_to_int(testArr);
-
-    Pnm_ppm testImg;
-    NEW(testImg);
-    testImg->pixels = testArr->array;
-    testImg->height = testArr->methods->height(testArr->array);
-    testImg->width = testArr->methods->width(testArr->array);
-    testImg->denominator = 255;
-    testImg->methods = testArr->methods;
-
-
-    FILE *output = fopen("DCT_conversion_final.ppm", "w");
-    Pnm_ppmwrite(output, testImg);
-    fclose(output);
-}
-
-
-
-
-
-
-
-
-void apply_printValues(int i, int j, A2Methods_UArray2 array2, void *elem, void *cl)
-{  
-    (void) cl;
-    (void) i;
-    (void) j;
-    (void) array2;
-    // (void) elem;
-
-    // RGB_float pixel = elem;
-    // printf("red: %f\n", pixel->red);
-    // printf("green: %f\n", pixel->green);
-    // printf("blue: %f\n", pixel->blue);
-    // printf("\n");
-
-    // DCT_data data = elem;
-    // fprintf(stderr, "a: %u\n", data->a);
-    // fprintf(stderr, "b: %i\n", data->b);
-    // fprintf(stderr, "c: %i\n", data->c);
-    // fprintf(stderr, "d: %i\n", data->d);
-    // fprintf(stderr, "Pb_avg: %u\n", data->PB_avg);
-    // fprintf(stderr, "Pr_avg: %u\n\n", data->PR_avg);
-
-    VCS_avg averagedPixel = elem;
-    fprintf(stderr, "Y1: %f\n", averagedPixel->Y[0]);
-    fprintf(stderr, "Y2: %f\n", averagedPixel->Y[1]);
-    fprintf(stderr, "Y3: %f\n", averagedPixel->Y[2]);
-    fprintf(stderr, "Y4: %f\n", averagedPixel->Y[3]);
-    fprintf(stderr, "Pb_avg: %u\n", averagedPixel->PB_avg);
-    fprintf(stderr, "Pr_avg: %u\n\n", averagedPixel->PR_avg);
-
-    // printf("(%i, %i)\n", j, i);
-
+        Pnm_ppmfree(&image);
+        FREE(arr_and_methods);
 }

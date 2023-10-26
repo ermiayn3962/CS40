@@ -1,342 +1,212 @@
-// #include <bitpack.h>
-// #include <assert.h>
-// #include <stdio.h>
-// #include <stdint.h>
-// #include <stdlib.h>
-
-// const unsigned SYSTEM_SIZE = 64;
-// Except_T Bitpack_Overflow = { "Overflow packing bits" };
-
-// static uint64_t getMask(unsigned width, unsigned lsb);
-
-// bool Bitpack_fitsu(uint64_t n, unsigned width)
-// {
-//     assert(width <= SYSTEM_SIZE && width != 0);
-
-//     // printf("This is n inside fitsu: %lu\n", n);
-//     // printf("this is fitsu width: %u\n", width);
-
-//     // uint64_t max = (1 << (width - 1)) - 1;
-//     // uint64_t tester = n;
-//     // tester = tester << (SYSTEM_SIZE - width);
-//     // tester = tester >> (SYSTEM_SIZE - width);
-    
+/**************************************************************
+ *
+ *                     bitpack.c
+ *
+ *     Assignment: arith
+ *     Authors: Cooper Golemme (cgolem01) and Yoda Ermias (yermia01)
+ *     Date: Oct 26, 2023
+ * 
+ *     Contains the functions described in bitpack.h to put and
+ *     retrieve bits from a word with 64 bits
+ *
+ *
+ **************************************************************/
 
 
-//     return ((n >> width) == 0);
-// }
-
-// bool Bitpack_fitss(int64_t n, unsigned width)
-// {
-//     // printf("This is n inside fitss: %li\n", n);
-//     // printf("this is fitss width: %u\n", width);
-
-//     assert(width <= SYSTEM_SIZE && width != 0);
-//     // printf("this is n: %lu\n", n);
-//     // int64_t max_pos = (1 << (width - 2)) - 1;
-//     // int64_t max_neg = (1 << (width - 1));
-
-//     // printf("max_pos: %lu\n", max_pos);
-//     // printf("max_neg: %lu\n", max_neg);
-//     int64_t tester = n;
-//     tester = tester << (SYSTEM_SIZE - width);
-//     tester = tester >>(SYSTEM_SIZE - width);
-
-//     // negative range
-//     // return n >= max_neg && n <= max_pos;
-//     return n == tester;
-    
-// }
-
-// uint64_t Bitpack_getu(uint64_t word, unsigned width, unsigned lsb)
-// {
-//     assert(width <= SYSTEM_SIZE);
-//     assert(width + lsb <= SYSTEM_SIZE);
-
-//     if (width == 0) {
-//         return 0;
-//     }
-
-//     uint64_t mask = ~0;
-//     mask = mask << (SYSTEM_SIZE - width);
-
-//     // lsb or lsb - 1
-//     mask = mask >> (SYSTEM_SIZE - (lsb + width));
-
-//     // mask = mask << lsb;
-//     // fprintf(stderr, "n: %lu \n", word & mask);
-//     return word & mask;
-// }
-
-// uint64_t getMask(unsigned width, unsigned lsb)
-// {
-//     uint64_t mask = ~0;
-//     mask = mask << (SYSTEM_SIZE - width);
-//     mask = mask >> (SYSTEM_SIZE - (lsb + width));
-//     return mask;
-// }
-
-// int64_t Bitpack_gets(uint64_t word, unsigned width, unsigned lsb)
-// {
-//     assert(width + lsb <= SYSTEM_SIZE);
-//     if (width == 0) {
-//         // fprintf(stderr, "width is 0\n");
-//         return 0;
-//     }
-//     // fprintf(stderr, "word: %lu\n", word);
-    
-//     int64_t temp = word << (SYSTEM_SIZE - width - lsb);
-    
-//     int64_t signedVal = temp >> (SYSTEM_SIZE - width);
-    
-//     // fprintf(stderr, "val: %li\n", signedVal);
-
-//     return signedVal;
-// }
-
-// uint64_t Bitpack_newu(uint64_t word, unsigned width, unsigned lsb, uint64_t value)
-// {
-//     // printf("width: %u\n", width);
-//     // printf("lsb: %u\n", lsb);
-//     // printf("value: %lu\n", value);
-
-//     assert(width <= SYSTEM_SIZE);
-//     assert(width + lsb <= SYSTEM_SIZE);
-//     // fprintf(stderr, "width: %u\n", width);
-//     if (!Bitpack_fitsu(value, width)) {
-//         RAISE (Bitpack_Overflow);
-//         exit(EXIT_FAILURE);
-//     }
-
-//     uint64_t unMask = ~getMask(width, lsb);
-    
-//     // lsb or lsb - 1
-//     uint64_t shifted_val = value << lsb;
-//     uint64_t word_without_val = word & unMask;
-//     return word_without_val | shifted_val;
-// }
-
-// uint64_t Bitpack_news(uint64_t word, unsigned width, unsigned lsb,  int64_t value)
-// {
-//     assert(width <= SYSTEM_SIZE);
-//     assert(width + lsb <= SYSTEM_SIZE);
-//     if (!Bitpack_fitss(value, width)) {
-//         RAISE (Bitpack_Overflow);
-//         exit(EXIT_FAILURE);
-//     }
-//     // printf("n before shift: %lu\n", value);
-//     // printf("n after shift: %lu\n",  >> width);
-//     uint64_t temp = value << (SYSTEM_SIZE - width);
-    
-//     int64_t signedVal = temp >> (SYSTEM_SIZE - width);
-
-
-//     return Bitpack_newu(word, width, lsb, signedVal);
-// }
-
-
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <math.h>
+#include <bitpack.h>
 #include <assert.h>
-#include <except.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
-#include "bitpack.h"
+/* Size of system memory representation */
+const unsigned SYSTEM_SIZE = 64;
 
+/* Exception bit overflow */
 Except_T Bitpack_Overflow = { "Overflow packing bits" };
 
-static inline uint64_t ushift_right(uint64_t value, unsigned shift_amount);
-static inline int64_t shift_right(int64_t value, unsigned shift_amount);
-static inline uint64_t ushift_left(uint64_t value, unsigned shift_amount);
-static inline int64_t shift_left(int64_t value, unsigned shift_amount);
-static inline uint64_t ushift_64(uint64_t value);
-static inline int64_t shift_64(int64_t value);
+static uint64_t mask(unsigned width, unsigned lsb);
 
-/* Tells whether unsigned argument n can be represented in width bits.
- * CRE if width is greater than 64.
+
+/* Bitpack_fitsu
+ * Description: checks if unsigned value can be represented with width number of
+ *              bits
+ * 
+ * Input: n - unsigned value to check if fits
+ *        width - number of bits to see if n fits into
+ * 
+ * Output: bool - true if fits, false if not fit
+ * 
+ * Assertions: C.R.E if width exceeds SYSTEM_SIZE
+ *             C.R.E if width = 0
  */
 bool Bitpack_fitsu(uint64_t n, unsigned width)
 {
-        assert(width <= 64);
-        
-        unsigned max_value = pow(2, width) - 1;
-        
-        if (n > max_value)
-                return false;
+    assert(width <= SYSTEM_SIZE && width != 0);
 
-        return true;
+    uint64_t tester = n;
+    tester = tester << (SYSTEM_SIZE - width);
+    tester = tester >> (SYSTEM_SIZE - width);
+    
+    return (n == tester);
 }
 
-/* Tells whether signed argument n can be represented in width bits.
- * CRE if width is greater than 64.
+
+/* Bitpack_fitss
+ * Description: checks if signed value can be represented with width number of
+ *              bits
+ * 
+ * Input: n - signed value to check if fits
+ *        width - number of bits to see if n fits into
+ * 
+ * Output: bool - true if fits, false if not fit
+ * 
+ * Assertions: C.R.E if width exceeds SYSTEM_SIZE
+ *             C.R.E if width = 0
  */
 bool Bitpack_fitss(int64_t n, unsigned width)
 {
-        assert(width <= 64);
-        
-        signed max_value = pow(2, width)/2 - 1;
-        signed min_value = -(pow(2, width)/2);
-        
-        if (n > max_value || n < min_value)
-                return false;
+    assert(width <= SYSTEM_SIZE && width != 0);
 
-        return true;
+    int64_t tester = n;
+    tester = tester << (SYSTEM_SIZE - width);
+    tester = tester >>(SYSTEM_SIZE - width);
+    return n == tester; 
 }
 
-/* Extracts a field representing an unsigned integer from a given word 
- * given the width of the field and the location of the field's least 
- * significant bit. CRE if width OR (width + lsb) is greater than 64.
+
+/* Bitpack_getsu
+ * Description: gets an unsigned value in word at specified location
+
+ * Input: word - word to get value from
+ *        width - width of value to get
+ *        lsb - starting bit of value to get
+ * 
+ * Output: uint64_t representing the value got by function
+ * 
+ * Assertions: C.R.E if width exceeds SYSTEM_SIZE
+ *             C.R.E if width + lsb exceeds SYSTEM_SIZE (try to put value in a 
+ *             space past the SYSTEM_SIZE)
  */
 uint64_t Bitpack_getu(uint64_t word, unsigned width, unsigned lsb)
 {
-        assert(width <= 64);
-        assert(width + lsb <= 64);
+    assert(width <= SYSTEM_SIZE);
+    assert(width + lsb <= SYSTEM_SIZE);
 
-        uint64_t mask = ~0;
-        mask = ushift_right(mask, 64 - width);
-        mask = ushift_left(mask, lsb);
-        uint64_t extracted_word = (mask & word);
-        extracted_word = ushift_right(extracted_word, lsb);
+    if (width == 0) return 0;
 
-        return extracted_word;
+    word = word << (SYSTEM_SIZE - (width + lsb));
+    word = word >> (SYSTEM_SIZE - width);
+    return word;
 }
 
-/* Extracts a field representing a signed integer from a given word 
- * given the width of the field and the location of the field's least 
- * significant bit. CRE if width OR (width + lsb) is greater than 64.
+
+/* Bitpack_getss
+ * Description: gets a signed value in word at specified location
+ 
+ * Input: word - word to get value from
+ *        width - width of value to get
+ *        lsb - starting bit of value to get
+ * 
+ * Output: int64_t representing the value got by function
+ * 
+ * Assertions: C.R.E if width exceeds SYSTEM_SIZE
+ *             C.R.E if width + lsb exceeds SYSTEM_SIZE (try to put value in a 
+ *             space past the SYSTEM_SIZE)
  */
 int64_t Bitpack_gets(uint64_t word, unsigned width, unsigned lsb)
 {
-        uint64_t extracted_unsigned_word = Bitpack_getu(word, width, lsb);
-        extracted_unsigned_word = 
-                ushift_left(extracted_unsigned_word, 64 - width);
-        int64_t extracted_word = (int64_t)extracted_unsigned_word;
-        extracted_word = shift_right(extracted_word, 64 - width);
-        
-        return extracted_word;
+    assert(width <= SYSTEM_SIZE);
+    assert(width + lsb <= SYSTEM_SIZE);
+    if (width == 0) return 0;
+
+    int64_t temp = word << (SYSTEM_SIZE - width - lsb);
+    int64_t signedVal = temp >> (SYSTEM_SIZE - width);
+    
+    return signedVal;
 }
 
-/* Returns a new word in which the field of width width with least significant
- * bit at lsb has been replaced by an unsigned width-bit representation 
- * of value.
+
+/* Bitpack_news
+ * Description: puts an unsigned value in word at specified location
+
+ * Input: word - word to put value in 
+ *        width - width value to put in
+ *        lsb - the bit the value should start
+ *        value - the value to put in word
+ * 
+ * Output: updated word with value in it.
+ * 
+ * Assertions: C.R.E if width exceeds SYSTEM_SIZE
+ *             C.R.E if width + lsb exceeds SYSTEM_SIZE (try to put value in a 
+ *             space past the SYSTEM_SIZE)
+ *             Bitpack_Overflow and exit failure if value does not fit in the 
+ *             width provided to this function (more on that in Bitpack_fitsu)
  */
-uint64_t Bitpack_newu(uint64_t word, unsigned width, 
-                      unsigned lsb, uint64_t value)
+uint64_t Bitpack_newu(uint64_t word, unsigned width, unsigned lsb,
+                      uint64_t value)
 {
-        assert(width <= 64);
-        assert(width + lsb <= 64);
-        if (!(Bitpack_fitsu(value, width)))
-                RAISE(Bitpack_Overflow);
+    assert(width <= SYSTEM_SIZE);
+    assert(width + lsb <= SYSTEM_SIZE);
 
-        uint64_t mask = ~0;
-        mask = ushift_right(mask, 64 - width);
-        mask = ushift_left(mask, lsb);
-        mask = ~mask;
+    if (!Bitpack_fitsu(value, width)) {
+        RAISE(Bitpack_Overflow);
+        exit(EXIT_FAILURE);
+    }
 
-        uint64_t new_word = (word & mask);      
-        value = ushift_left(value, lsb);
-        new_word = (new_word | value);
+    uint64_t shifted_val = value << lsb;
 
-        return new_word;
+    uint64_t unMask = ~mask(width, lsb);
+    uint64_t word_without_val = word & unMask;
+
+    return word_without_val | shifted_val;
 }
 
-/* Returns a new word in which the field of width width with least significant
- * bit at lsb has been replaced by a signed width-bit representation of value.
+
+/* Bitpack_news
+ * Description: puts a signed value in word at specified location
+
+ * Input: word - word to put value in 
+ *        width - width value to put in
+ *        lsb - the bit the value should start
+ *        value - the value to put in word
+ * 
+ * Output: updated word with value in it.
+ * 
+ * Assertions: C.R.E if width exceeds SYSTEM_SIZE
+ *             C.R.E if width + lsb exceeds SYSTEM_SIZE (try to put value in a 
+ *             space past the SYSTEM_SIZE)
+ *             Bitpack_Overflow and exit failure if value does not fit in the 
+ *             width provided to this function (more on that in Bitpack_fitss)
  */
-uint64_t Bitpack_news(uint64_t word, unsigned width, 
-                      unsigned lsb, int64_t value)
+uint64_t Bitpack_news(uint64_t word, unsigned width, unsigned lsb,
+                      int64_t value)
 {
-        assert(width <= 64);
-        assert(width + lsb <= 64);
-        if (!(Bitpack_fitss(value, width)))
-                RAISE(Bitpack_Overflow);
+    assert(width <= SYSTEM_SIZE);
+    assert(width + lsb <= SYSTEM_SIZE);
+    if (!Bitpack_fitss(value, width)) {
+        RAISE(Bitpack_Overflow);
+        exit(EXIT_FAILURE);
+    }
+    uint64_t temp = value << (SYSTEM_SIZE - width);
+    int64_t signedVal = temp >> (SYSTEM_SIZE - width);
 
-        uint64_t mask = ~0;
-        mask = ushift_right(mask, 64 - width);
-        mask = ushift_left(mask, lsb);
-        mask = ~mask;
-
-        uint64_t new_word = (word & mask);
-        
-        value = shift_left(value, 64 - width);
-        uint64_t unsigned_value = (uint64_t)value;
-        unsigned_value = ushift_right(unsigned_value, 64 - width);
-        unsigned_value = ushift_left(unsigned_value, lsb);
-        
-        new_word = (new_word | unsigned_value);
-
-        int64_t signed_word = (int64_t)new_word;
-
-        return signed_word;
+    return Bitpack_newu(word, width, lsb, signedVal);
 }
 
-/* shifts an unsigned value right by the shift amount. */
-static inline uint64_t ushift_right(uint64_t value, unsigned shift_amount)
-{
-        assert(shift_amount <= 64);
 
-        if (shift_amount == 64)
-                value = ushift_64(value);
-        else
-                value = value >> shift_amount;
+/* get_mask
+ * Description: creates a mask for bits in position from [lsb + width, lsb]
 
-        return value;
-}
-
-/* shifts a signed value right by the shift amount. */
-static inline int64_t shift_right(int64_t value, unsigned shift_amount)
-{
-        assert(shift_amount <= 64);
-
-        if (shift_amount == 64)
-                value = shift_64(value);
-        else
-                value = value >> shift_amount;
-
-        return value;
-}
-
-/* shifts an unsigned value left by the shift amount. */
-static inline uint64_t ushift_left(uint64_t value, unsigned shift_amount)
-{
-        assert(shift_amount <= 64);
-
-        if (shift_amount == 64)
-                value = ushift_64(value);
-        else
-                value = value << shift_amount;
-
-        return value;
-}
-
-/* shifts a signed value left by the shift amount. */
-static inline int64_t shift_left(int64_t value, unsigned shift_amount)
-{
-        assert(shift_amount <= 64);
-
-        if (shift_amount == 64)
-                value = shift_64(value);
-        else
-                value = value << shift_amount;
-
-        return value;
-}
-
-/* shifts an unsigned value right by 64 (returns a bit-field
- * of all 0's).
+ * Input: width - width of desired mask (number of 1s in mask)
+ *        lsb - start of mask in uint64
+ * 
+ * Output: uint64 with 0s everywhere and 1s between [lsb + width, lsb]
  */
-static inline uint64_t ushift_64(uint64_t value)
+uint64_t mask(unsigned width, unsigned lsb)
 {
-        value = 0;
-        return value;
-}
-
-/* shifts a signed value right by 64 (returns a bit-field
- * of all 0's or all 1's depending on the sign).
- */
-static inline int64_t shift_64(int64_t value)
-{
-        value = ~0;
-        return value;
+    uint64_t mask = ~0;
+    mask = mask << (SYSTEM_SIZE - width);
+    mask = mask >> (SYSTEM_SIZE - (lsb + width));
+    return mask;
 }

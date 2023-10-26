@@ -1,3 +1,16 @@
+/**************************************************************
+ *
+ *                     image40.c
+ *
+ *     Assignment: arith
+ *     Authors: Cooper Golemme (cgolem01) and Yoda Ermias (yermia01)
+ *     Date: Oct 26, 2023
+ * 
+ *     Handles commandline input for program and calls
+ *     functions accordingly.
+ *
+ *
+ **************************************************************/
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

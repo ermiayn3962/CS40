@@ -1,4 +1,4 @@
-# Makefile for locality (Comp 40 Assignment 4)
+# Makefile for arith (Comp 40 Assignment 4)
 # 
 # Includes build rules for a2test and ppmtrans.
 #
@@ -49,7 +49,7 @@ INCLUDES = $(shell echo *.h)
 
 ############### Rules ###############
 
-all: 40image compress40
+all: 40image
 
 
 ## Compile step (.c files -> .o files)
@@ -61,12 +61,8 @@ all: 40image compress40
 
 ## Linking step (.o -> executable program)
 
-40image: 40image.o compress40.o bitpack.o a2blocked.o uarray2b.o uarray2.o rgb_conversion.o vcs_conversion.o image_manipulation.o codeword.o bitpack.o
+40image: 40image.o compress40.o bitpack.o a2blocked.o uarray2b.o uarray2.o rgb_conversion.o vcs_conversion.o image_manipulation.o codeword.o 
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
-
-compress40: compress40.o a2blocked.o uarray2b.o uarray2.o rgb_conversion.o image_manipulation.o vcs_conversion.o image_manipulation.o codeword.o bitpack.o
-	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
-
 
 clean:
 	rm -f ppmtrans a2test timing_test *.o
