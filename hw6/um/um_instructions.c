@@ -102,10 +102,12 @@ void process_instructions(UM_Memory memory)
         // fprintf(stderr, "length of 0th segment: %i\n", 
         //         Seq_length(zero_segment)); //testing
         while(counter < (uint32_t) Seq_length(zero_segment)) {
+                // fprintf(stderr, "\nCOUNTER: %i\n", counter);
 
                 // fprintf(stderr, "COUNTER IS %i\n", counter ); //testing 
                 instruction temp = unpack_word(*(uint32_t *) Seq_get
                                    (zero_segment, counter));
+                counter++;
 
                 if (temp->command == HALT) {
                         // fprintf(stderr, "Halted XD\n");
@@ -114,13 +116,12 @@ void process_instructions(UM_Memory memory)
                         return;
                 }
 
-                counter++;
                 call_commands(memory, temp, registers, &counter);
                 assert(counter < (uint32_t) Seq_length(zero_segment));
 
                 // fprintf(stderr, "\n");
                 // for (int i = 0; i < UArray_length(registers); i++) {
-                //         fprintf(stderr, "Value in register %i is %u\n", i, *(uint32_t *) UArray_at(registers, i));
+                //         // fprintf(stderr, "Value in register %i is %u\n", i, *(uint32_t *) UArray_at(registers, i));
                 // } //testing
                 // fprintf(stderr, "\n");
                 
@@ -155,50 +156,109 @@ static void call_commands(UM_Memory memory, instruction command,
                           UArray_T registers, uint32_t *counter)
 {
         /* save values from struct for easier access */
-        Um_opcode op = command->command;
+        Um_opcode opcode = command->command;
+        // fprintf(stderr, "Command: %u\n", command->command);
         uint32_t ra = command->a;
+        // fprintf(stderr, "a: %u\n", command->a);
+
         uint32_t rb = command->b;
+        // fprintf(stderr, "b: %u\n", command->b);
+
         uint32_t rc = command->c;
+        // fprintf(stderr, "c: %u\n", command->c);
+
         uint32_t val = command->val;
+        // fprintf(stderr, "val: %u\n", command->val);
 
-        if (op == CMOV) {
-                conditional_move(registers, ra, rb, rc);
+        // switch
+        // if (op == CMOV) {
+        //         conditional_move(registers, ra, rb, rc);
         
-        } else if (op == SLOAD) {
-                segmented_load(memory, registers, ra, rb, rc);
+        // } else if (op == SLOAD) {
+        //         segmented_load(memory, registers, ra, rb, rc);
 
-        } else if (op == SSTORE) {
-                segmented_store(memory, registers, ra, rb, rc);
+        // } else if (op == SSTORE) {
+        //         segmented_store(memory, registers, ra, rb, rc);
                 
-        } else if (op == ADD) {
-                addition(registers, ra, rb, rc);
+        // } else if (op == ADD) {
+        //         addition(registers, ra, rb, rc);
                 
-        } else if (op == MUL) {
-                multiplication(registers, ra, rb, rc);
+        // } else if (op == MUL) {
+        //         multiplication(registers, ra, rb, rc);
                 
-        } else if (op == DIV) {
-                division(registers, ra, rb, rc);
+        // } else if (op == DIV) {
+        //         division(registers, ra, rb, rc);
                 
-        } else if (op == NAND) {
-                bitwise_nand(registers, ra, rb, rc);
+        // } else if (op == NAND) {
+        //         bitwise_nand(registers, ra, rb, rc);
                 
-        } else if (op == ACTIVATE) {
-                map_segment(memory, registers, rb, rc);
+        // } else if (op == ACTIVATE) {
+        //         map_segment(memory, registers, rb, rc);
                 
-        } else if (op == INACTIVATE) {
-                unmap_segment(memory, registers, rc);
-        } else if (op == OUT) {
-                output(registers, rc);
+        // } else if (op == INACTIVATE) {
+        //         unmap_segment(memory, registers, rc);
+        // } else if (op == OUT) {
+        //         output(registers, rc);
                 
-        } else if (op == IN) {
-                input(registers, rc);
+        // } else if (op == IN) {
+        //         input(registers, rc);
                 
-        } else if (op == LOADP) {
-                load_program(memory, registers, counter, rb, rc);
+        // } else if (op == LOADP) {
+        //         load_program(memory, registers, counter, rb, rc);
                 
-        } else if (op == LV) {
-                load_value(registers, ra, val);
-        }       
+        // } else if (op == LV) {
+        //         load_value(registers, ra, val);
+        // }   
+
+
+
+
+        switch (opcode) {
+		case CMOV:   
+                        conditional_move(registers, ra, rb, rc);
+		        break;
+		case SLOAD:  
+                        segmented_load(memory, registers, ra, rb, rc);
+		        break;
+		case SSTORE: 
+                        segmented_store(memory, registers, ra, rb, rc);
+		        break;
+		case ADD:    
+                        addition(registers, ra, rb, rc);
+			break;
+		case MUL:    
+                        multiplication(registers, ra, rb, rc);
+			break;
+		case DIV:    
+                        division(registers, ra, rb, rc);
+		        break;
+		case NAND:   
+                        bitwise_nand(registers, ra, rb, rc);
+		        break;
+                case HALT:
+                        return;
+		case ACTIVATE:    
+                        map_segment(memory, registers, rb, rc);
+		        break;
+		case INACTIVATE:  
+                        unmap_segment(memory, registers, rc);
+			break;
+		case OUT:   
+                        output(registers, rc);
+		        break;
+        	case IN:    
+                        input(registers, rc);
+		        break;
+		case LOADP:  
+                        load_program(memory, registers, counter, rb, rc);
+		        break;
+		case LV:     
+                        load_value(registers, ra, val);
+                        break;
+		}
+
+
+
 }
 
 
@@ -302,6 +362,13 @@ static void conditional_move(UArray_T registers, int a, int b, int c)
         uint32_t *rc = UArray_at(registers, c);
         uint32_t *ra = UArray_at(registers, a);
 
+        // fprintf(stderr, "\nIN CONDITIONAL MOVE\n");
+        // fprintf(stderr, "\nra = %u\n", *ra);
+        // fprintf(stderr, "\n rb = %u\n", *rb);
+        // fprintf(stderr, "\n rc = %u\n", *rc);
+
+
+
         /* register c needs to hold 0 for the values to be updated */
         if (*rc != 0) {
                 *ra = *rb;
@@ -338,7 +405,10 @@ static void addition(UArray_T registers, int a, int b, int c)
         uint32_t *ra = UArray_at(registers, a);
 
         /* perform the computation and mod the result to fit in 32 bits */
-        *ra = (*rb + *rc) % (uint32_t) pow(2, 32);
+        // fprintf(stderr, "rb + rc: %i\n", (*rb + *rc));
+        // fprintf(stderr, "rb + rc mod 2^32: %i\n", (*rb + *rc) % (uint32_t) pow(2, 32));
+
+        *ra = (*rb + *rc);      
 }
 
 /********** multiplication ********
@@ -370,7 +440,7 @@ static void multiplication(UArray_T registers, int a, int b, int c)
         uint32_t *ra = UArray_at(registers, a);
 
         /* perform the computation and mod the result to fit in 32 bits */
-        *ra = (*rb * *rc) % (uint32_t) pow(2, 32);
+        *ra = (*rb * *rc);
 }
 
 /********** division ********
@@ -434,6 +504,9 @@ static void bitwise_nand(UArray_T registers, int a, int b, int c)
 
         /* perform the nand operation */
         *ra = ~(*rb & *rc);
+        // fprintf(stderr, "NAND RESULT BEFORE:%i\n",  ~(*rb & *rc));
+        // fprintf(stderr, "NAND RESULT BEFORE:%u\n", *ra);
+
 }
 
 /********** output ********

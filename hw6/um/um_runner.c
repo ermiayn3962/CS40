@@ -37,14 +37,12 @@
  ************************/
 void run_um(FILE *um_file)
 {
-    // fprintf(stderr, "inside um_run\n");
     assert(um_file != NULL);
 
     UM_Memory memory = UM_Memory_New(um_file);
 
     process_instructions(memory);
 
-    
     /* clean up memory */
     clean_up_memory(&memory);
     fclose(um_file);

@@ -252,11 +252,19 @@ void build_mapping_test(Seq_T stream)
 {
         append(stream, loadval(r0, 1));
 
+        append(stream, loadval(r2, 2));
+
         append(stream, loadval(r1, 9));
         
         append(stream, map(r0, r1));
 
+        append(stream, map(r2, r1));
+
         append(stream, unmap(r0));
+
+        append(stream, unmap(r2));
+
+        append(stream, map(r2, r1));
 
         append(stream, halt());
 
@@ -354,14 +362,26 @@ void build_print_a_digit(Seq_T stream)
 
 void build_add_test(Seq_T stream)
 {
-        append(stream, loadval(r2, 2));
+        append(stream, loadval(r2, 30));
         append(stream, output(r2));
         
-        append(stream, loadval(r3, 3));
+        append(stream, loadval(r3, 25));
         append(stream, output(r3));
 
         append(stream, add(r1, r2, r3));
-        // append(stream, output(r1));
+        append(stream, output(r1));
+
+        /* addition with negative numbers */
+
+        append(stream, nand(r4, r2, r2));
+        // append(stream, output(r4));
+        
+        append(stream, loadval(r3, 63));
+        append(stream, output(r3));
+
+        append(stream, add(r1, r3, r4));
+        append(stream, output(r1));
+
 
         append(stream, halt());
 
