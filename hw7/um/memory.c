@@ -196,12 +196,12 @@ static uint32_t getBytes(FILE *input, int num_bytes)
  *     May CRE if memory or registers is NULL
  * 
  ************************/  
-void map_segment(UM_Memory memory, UArray_T registers, int b, int c)
+void map_segment(UM_Memory memory, uint32_t *registers, int b, int c)
 {
         assert(memory != NULL && registers != NULL);
         
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *rb = UArray_at(registers, b);
+        // uint32_t *rc = UArray_at(registers, c);
         int pos;
 
         if (Seq_length(memory->ID) == 0) {
@@ -218,7 +218,7 @@ void map_segment(UM_Memory memory, UArray_T registers, int b, int c)
 
         /* Creating a new segment of size c */
         Seq_T new_seg = Seq_new(0);
-        for (uint32_t i = 0; i < *rc; i++) {
+        for (uint32_t i = 0; i < registers[c]; i++) {
                 uint32_t *instruction = malloc(sizeof(*instruction));
                 *instruction = 0;
                 Seq_addhi(new_seg, instruction);
@@ -228,7 +228,8 @@ void map_segment(UM_Memory memory, UArray_T registers, int b, int c)
         Seq_free(&temp);
         Seq_put(memory->segments, pos, new_seg);
 
-        *rb = pos;      
+        // *rb = pos;   
+        registers[b] = pos;   
 }
 
 
@@ -252,26 +253,26 @@ void map_segment(UM_Memory memory, UArray_T registers, int b, int c)
  *     May CRE if memory or registers is NULL
  * 
  ************************/
-void unmap_segment(UM_Memory memory, UArray_T registers, int c)
+void unmap_segment(UM_Memory memory, uint32_t *registers, int c)
 {   
         assert(memory != NULL && registers != NULL);
         
-        uint32_t *rc = UArray_at(registers, c);
+        // uint32_t rc = registers[c];
 
         /* Getting the sequence of instructions at memory segment c*/
-        Seq_T temp = Seq_get(memory->segments, *rc);
+        Seq_T temp = Seq_get(memory->segments, registers[c]);
 
         clean_instructions(temp);
         Seq_free(&temp);
 
         /* Putting an empty segment at $m[$r[c]] */
-        Seq_put(memory->segments, *rc, Seq_new(0));
-        assert((Seq_T) Seq_get(memory->segments, *rc) != NULL);
-        assert(Seq_length(Seq_get(memory->segments, *rc)) == 0);
+        Seq_put(memory->segments, registers[c], Seq_new(0));
+        assert((Seq_T) Seq_get(memory->segments, registers[c]) != NULL);
+        assert(Seq_length(Seq_get(memory->segments, registers[c])) == 0);
 
         /* place the ID in ID sequence to be reused later */
         int *addy = malloc(sizeof(*addy));
-        *addy = *rc;
+        *addy = registers[c];
 
         Seq_addhi(memory->ID, addy); 
 }
@@ -298,17 +299,17 @@ void unmap_segment(UM_Memory memory, UArray_T registers, int c)
  *     May CRE if memory or registers is NULL
  * 
  ************************/
-void segmented_load(UM_Memory memory, UArray_T registers, int a, int b, int c)
+void segmented_load(UM_Memory memory, uint32_t *registers, int a, int b, int c)
 {
         assert(memory != NULL && registers != NULL);
         
-        uint32_t *ra = UArray_at(registers, a);
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *ra = UArray_at(registers, a);
+        // uint32_t *rb = UArray_at(registers, b);
+        // uint32_t *rc = UArray_at(registers, c);
 
         /* grab the sequence from rb and the element to be loaded from rc */
-        Seq_T curr_seq = Seq_get(memory->segments, *rb);
-        *ra = *(uint32_t *) Seq_get(curr_seq, *rc);
+        Seq_T curr_seq = Seq_get(memory->segments, registers[b]);
+        registers[a] = *(uint32_t *) Seq_get(curr_seq, registers[c]);
 }
 
 
@@ -333,24 +334,24 @@ void segmented_load(UM_Memory memory, UArray_T registers, int a, int b, int c)
  *     May CRE if memory or registers is NULL
  * 
  ************************/
-void segmented_store(UM_Memory memory, UArray_T registers, int a, int b, int c)
+void segmented_store(UM_Memory memory, uint32_t *registers, int a, int b, int c)
 {
         assert(memory != NULL && registers != NULL);
        
-        uint32_t *ra = UArray_at(registers, a);
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *ra = UArray_at(registers, a);
+        // uint32_t *rb = UArray_at(registers, b);
+        // uint32_t *rc = UArray_at(registers, c);
 
        /* The data to be stored comes from rc */
         uint32_t *data = malloc(sizeof(*data));
-        *data = *rc;
+        *data = registers[c];
 
-        Seq_T curr_seq = Seq_get(memory->segments, *ra);
+        Seq_T curr_seq = Seq_get(memory->segments, registers[a]);
         
-        uint32_t *temp = Seq_get(curr_seq, *rb);
+        uint32_t *temp = Seq_get(curr_seq, registers[b]);
         free(temp); 
         
-        Seq_put(curr_seq, *rb, data);
+        Seq_put(curr_seq, registers[b], data);
 }
 
 
@@ -375,24 +376,27 @@ void segmented_store(UM_Memory memory, UArray_T registers, int a, int b, int c)
  *     May CRE if memory or registers is NULL
  * 
  ************************/
-void load_program(UM_Memory memory, UArray_T registers, uint32_t *counter, 
+void load_program(UM_Memory memory, uint32_t *registers, uint32_t *counter, 
                   int b, int c)
 {
         assert(memory != NULL && registers != NULL);
 
         /* segment to be duplicated  */
-        uint32_t *rb = UArray_at(registers, b);
+        // uint32_t *rb = UArray_at(registers, b);
+        // uint32_t rb = registers[b];
         /* rc will be the counter */ 
-        uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *rc = UArray_at(registers, c);
+        // uint32_t rc = registers[c];
 
-        if (*rb != 0) {
+
+        if (registers[b] != 0) {
                 Seq_T dup = Seq_new(0); 
 
                 /* make a deep copy of the desired segment */
-                int length = Seq_length(Seq_get(memory->segments, *rb));
+                int length = Seq_length(Seq_get(memory->segments, registers[b]));
                 for (int i = 0; i < length; i++) {
                         uint32_t *instruction = malloc(sizeof(*instruction));
-                        Seq_T curr_seq = Seq_get(memory->segments, *rb);
+                        Seq_T curr_seq = Seq_get(memory->segments, registers[b]);
                         *instruction = *(uint32_t *) Seq_get(curr_seq, i);
                         Seq_addhi(dup, instruction);
                 }
@@ -404,10 +408,10 @@ void load_program(UM_Memory memory, UArray_T registers, uint32_t *counter,
 
                 /* check that counter is in range */
                 length = Seq_length(Seq_get(memory->segments, 0));
-                assert(*rc < (uint32_t) length);       
+                assert(registers[c] < (uint32_t) length);       
         }
 
-        *counter =  *rc;
+        *counter =  registers[c];
 }
 
 

@@ -50,15 +50,15 @@ typedef enum Um_opcode {
 
 static instruction unpack_word(uint32_t word);
 static void call_commands(UM_Memory memory, instruction command, 
-                          UArray_T registers, uint32_t *counter);
-static void addition(UArray_T registers, int a, int b, int c);
-static void bitwise_nand(UArray_T registers, int a, int b, int c);
-static void multiplication(UArray_T registers, int a, int b, int c);
-static void division(UArray_T registers, int a, int b, int c);
-static void conditional_move(UArray_T registers, int a, int b, int c);
-static void output(UArray_T registers, int c);
-static void load_value(UArray_T registers, int a, uint32_t val);
-static void input(UArray_T registers, int c);
+                          uint32_t *registers, uint32_t *counter);
+static void addition(uint32_t *registers, int a, int b, int c);
+static void bitwise_nand(uint32_t *registers, int a, int b, int c);
+static void multiplication(uint32_t *registers, int a, int b, int c);
+static void division(uint32_t *registers, int a, int b, int c);
+static void conditional_move(uint32_t *registers, int a, int b, int c);
+static void output(uint32_t *registers, int c);
+static void load_value(uint32_t *registers, int a, uint32_t val);
+static void input(uint32_t *registers, int c);
 
 
 /********** process_instructions ********
@@ -83,8 +83,9 @@ void process_instructions(UM_Memory memory)
         assert(memory != NULL);
 
         /* Creating the registers */
-        UArray_T registers = UArray_new(8, sizeof(uint32_t));
-        assert(UArray_length(registers) == 8);
+        // UArray_T registers = UArray_new(8, sizeof(uint32_t));
+        uint32_t *registers = malloc(sizeof(uint32_t) * 8);
+        // assert(UArray_length(registers) == 8);
         
         uint32_t counter = 0;
         bool loop = true;
@@ -100,7 +101,7 @@ void process_instructions(UM_Memory memory)
 
                 if (temp->command == HALT) {
                         free(temp);
-                        UArray_free(&registers);
+                        // UArray_free(&registers);
                         loop = false;
                         return;
                 }
@@ -108,7 +109,7 @@ void process_instructions(UM_Memory memory)
                 call_commands(memory, temp, registers, &counter);
                 free(temp);
         } 
-        UArray_free(&registers);
+        // UArray_free(&registers);
 }
 
 
@@ -133,7 +134,7 @@ void process_instructions(UM_Memory memory)
  * 
  ************************/
 static void call_commands(UM_Memory memory, instruction command, 
-                          UArray_T registers, uint32_t *counter)
+                          uint32_t *registers, uint32_t *counter)
 {
         /* save values from struct for easier access */
         Um_opcode opcode = command->command;
@@ -265,17 +266,17 @@ instruction unpack_word(uint32_t word)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void conditional_move(UArray_T registers, int a, int b, int c)
+static void conditional_move(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
 
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
-        uint32_t *ra = UArray_at(registers, a);
+        // uint32_t rb = registers[b];
+        // uint32_t rc = registers[c];
+        // uint32_t ra = registers[a];
 
         /* register c needs to not hold 0 for the values to be updated */
-        if (*rc != 0) {
-                *ra = *rb;
+        if (registers[c] != 0) {
+                registers[a] = registers[b];
         }
 }
 
@@ -299,15 +300,17 @@ static void conditional_move(UArray_T registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void addition(UArray_T registers, int a, int b, int c)
+static void addition(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
 
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
-        uint32_t *ra = UArray_at(registers, a);
+        // uint32_t *rb = registers[b];
+        // uint32_t *rc = registers[c];
+        // uint32_t *ra = registers[a];
 
-        *ra = (*rb + *rc);      
+        // *ra = (*rb + *rc);   
+
+        registers[a] = registers[b] + registers[c];   
 }
 
 /********** multiplication ********
@@ -330,15 +333,16 @@ static void addition(UArray_T registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void multiplication(UArray_T registers, int a, int b, int c)
+static void multiplication(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
         
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
-        uint32_t *ra = UArray_at(registers, a);
+        // uint32_t *rb = registers[b];
+        // uint32_t *rc = registers[c];
+        // uint32_t *ra = registers[a];
 
-        *ra = (*rb * *rc);
+        // *ra = (*rb * *rc);
+        registers[a] = (registers[b] * registers[c]);
 }
 
 /********** division ********
@@ -361,15 +365,17 @@ static void multiplication(UArray_T registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void division(UArray_T registers, int a, int b, int c)
+static void division(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
 
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
-        uint32_t *ra = UArray_at(registers, a);
+        // uint32_t *rb = registers[b];
+        // uint32_t *rc = registers[c];
+        // uint32_t *ra = registers[a];
 
-        *ra = (*rb / *rc);
+        // *ra = (*rb / *rc);
+
+        registers[a] = registers[b] / registers[c];
 }
 
 /********** bitwise_nand ********
@@ -392,16 +398,20 @@ static void division(UArray_T registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void bitwise_nand(UArray_T registers, int a, int b, int c)
+static void bitwise_nand(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
         
-        uint32_t *rb = UArray_at(registers, b);
-        uint32_t *rc = UArray_at(registers, c);
-        uint32_t *ra = UArray_at(registers, a);
+        // uint32_t *rb = registers[b];
+        // uint32_t *rc = registers[c];
+        // uint32_t *ra = registers[a];
 
-        /* perform the nand operation */
-        *ra = ~(*rb & *rc);
+        
+
+        // /* perform the nand operation */
+        // *ra = ~(*rb & *rc);
+
+        registers[a] = ~(registers[b] & registers[c]);
 }
 
 /********** output ********
@@ -422,15 +432,18 @@ static void bitwise_nand(UArray_T registers, int a, int b, int c)
  *     May CRE if registers is NULL or if outputted value is larger than 255
  * 
  ************************/
-static void output(UArray_T registers, int c)
+static void output(uint32_t *registers, int c)
 {      
-        assert(registers != NULL);
+        // assert(registers != NULL);
 
-        uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *rc = registers[c];
 
-        assert(*rc < 256);
 
-        putchar(*rc);
+        // assert(*rc < 256);
+
+        // putchar(*rc);
+        putchar(registers[c]);
 }
 
 /********** input ********
@@ -451,18 +464,22 @@ static void output(UArray_T registers, int c)
  *     May CRE if registers is NULL or if there is an error getting the input
  * 
  ************************/
-static void input(UArray_T registers, int c)
+static void input(uint32_t *registers, int c)
 {
-        assert(registers != NULL);
+        // assert(registers != NULL);
         
         /* grab data and its destination */
         uint8_t data = getchar();
-        uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *rc = UArray_at(registers, c);
+        // uint32_t *rc = registers[c];
+        
 
         if ((char) data == EOF) {
-                *rc = ~0;
+                // *rc = ~0;
+                registers[c] = ~0;
         } else {
-                *rc = data;
+                // *rc = data;
+                registers[c] = data;
         }
 
         assert(!ferror(stdin));
@@ -487,9 +504,14 @@ static void input(UArray_T registers, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void load_value(UArray_T registers, int a, uint32_t val)
+static void load_value(uint32_t *registers, int a, uint32_t val)
 {
-        assert(registers != NULL);
-        uint32_t *ra = UArray_at(registers, a);
-        *ra = val;
+        // assert(registers != NULL);
+        // uint32_t *ra = UArray_at(registers, a);
+        // uint32_t *ra = registers[a];
+        
+        
+        // *ra = val;
+
+        registers[a] = val;
 }

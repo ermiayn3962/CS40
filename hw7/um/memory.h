@@ -28,13 +28,13 @@ void clean_up_memory(UM_Memory *memory);
 
 Seq_T get_segment(UM_Memory memory, int id);
 
-void map_segment(UM_Memory memory, UArray_T registers, int b, int c);
-void unmap_segment(UM_Memory memory, UArray_T registers, int c);
+void map_segment(UM_Memory memory, uint32_t *registers, int b, int c);
+void unmap_segment(UM_Memory memory, uint32_t *registers, int c);
 
-void segmented_load(UM_Memory memory, UArray_T registers, int a, int b, int c);
-void segmented_store(UM_Memory memory, UArray_T registers, int a, int b, int c);
+void segmented_load(UM_Memory memory, uint32_t *registers, int a, int b, int c);
+void segmented_store(UM_Memory memory, uint32_t *registers, int a, int b, int c);
 
-void load_program(UM_Memory memory, UArray_T registers, uint32_t *counter,
+void load_program(UM_Memory memory, uint32_t *registers, uint32_t *counter,
                   int b, int c);
 
 
