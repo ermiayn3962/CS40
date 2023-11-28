@@ -138,10 +138,10 @@ static void applyEncode(int col, int row, A2Methods_UArray2 dct, void *elem,
         DCT_data dct_elem = elem;
         uint64_t word = 0;
 
-        word = Bitpack_newu(word, 9, 23, dct_elem->a);
-        word = Bitpack_news(word, 5, 18, dct_elem->b);
-        word = Bitpack_news(word, 5, 13, dct_elem->c);
-        word = Bitpack_news(word, 5, 8, dct_elem->d);
+        word = Bitpack_newu(word, 6, 26, dct_elem->a);
+        word = Bitpack_news(word, 6, 20, dct_elem->b);
+        word = Bitpack_news(word, 6, 14, dct_elem->c);
+        word = Bitpack_news(word, 6, 8, dct_elem->d);
         word = Bitpack_newu(word, 4, 4, dct_elem->PB_avg);
         word = Bitpack_newu(word, 4, 0, dct_elem->PR_avg);
         
@@ -178,10 +178,10 @@ static void applyDecode(int col, int row, A2Methods_UArray2 dct, void *elem,
 
         uint64_t word = getBytes(file, BYTES_IN_WORD);
         
-        dct_elem->a = Bitpack_getu(word, 9, 23);
-        dct_elem->b = Bitpack_gets(word, 5, 18);
-        dct_elem->c = Bitpack_gets(word, 5, 13);
-        dct_elem->d = Bitpack_gets(word, 5, 8);
+        dct_elem->a = Bitpack_getu(word, 6, 26);
+        dct_elem->b = Bitpack_gets(word, 6, 20);
+        dct_elem->c = Bitpack_gets(word, 6, 14);
+        dct_elem->d = Bitpack_gets(word, 6, 8);
         dct_elem->PB_avg = Bitpack_getu(word, 4, 4);
         dct_elem->PR_avg = Bitpack_getu(word, 4, 0);
 }
