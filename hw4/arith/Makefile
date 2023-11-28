@@ -49,7 +49,7 @@ INCLUDES = $(shell echo *.h)
 
 ############### Rules ###############
 
-all: 40image
+all: 40image-6
 
 
 ## Compile step (.c files -> .o files)
@@ -61,7 +61,7 @@ all: 40image
 
 ## Linking step (.o -> executable program)
 
-40image: 40image.o compress40.o bitpack.o a2blocked.o uarray2b.o uarray2.o rgb_conversion.o vcs_conversion.o image_manipulation.o codeword.o 
+40image-6: 40image.o compress40.o bitpack.o a2blocked.o uarray2b.o uarray2.o rgb_conversion.o vcs_conversion.o image_manipulation.o codeword.o 
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 clean:

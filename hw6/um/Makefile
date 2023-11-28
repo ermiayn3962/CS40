@@ -28,7 +28,7 @@ INCLUDES = $(shell echo *.h)
 
 ############### Rules ###############
 
-all: um playground writetests
+all: um
 
 
 ## Compile step (.c files -> .o files)
@@ -39,9 +39,6 @@ all: um playground writetests
 
 
 um: um_instructions.o um_runner.o bitpack.o memory.o um.o
-	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
-
-playground: um_instructions.o um_runner.o bitpack.o memory.o playground.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 writetests: umlabwrite.o umlab.o

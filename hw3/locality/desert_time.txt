@@ -1,0 +1,145 @@
+Rotation: 0, Width: 816, Height: 458
+Mapping Type: Row Major
+Total Time (ns): 899.000000
+Average Time Per Pixel (ns): 0.002405
+
+Rotation: 90, Width: 458, Height: 816
+Mapping Type: Row Major
+Total Time (ns): 17388678.000000
+Average Time Per Pixel (ns): 46.527630
+
+Rotation: 180, Width: 816, Height: 458
+Mapping Type: Row Major
+Total Time (ns): 13123114.000000
+Average Time Per Pixel (ns): 35.114078
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Row Major
+Total Time (ns): 16664859.000000
+Average Time Per Pixel (ns): 44.590876
+
+Rotation: 0, Width: 816, Height: 458
+Mapping Type: Col Major
+Total Time (ns): 923.000000
+Average Time Per Pixel (ns): 0.002470
+
+Rotation: 90, Width: 458, Height: 816
+Mapping Type: Col Major
+Total Time (ns): 17645323.000000
+Average Time Per Pixel (ns): 47.214346
+
+Rotation: 180, Width: 816, Height: 458
+Mapping Type: Col Major
+Total Time (ns): 25062700.000000
+Average Time Per Pixel (ns): 67.061339
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Col Major
+Total Time (ns): 18005085.000000
+Average Time Per Pixel (ns): 48.176976
+
+Rotation: 0, Width: 816, Height: 458
+Mapping Type: Block Major
+Total Time (ns): 1033.000000
+Average Time Per Pixel (ns): 0.002764
+
+Rotation: 90, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 23428327.000000
+Average Time Per Pixel (ns): 62.688177
+
+Rotation: 180, Width: 816, Height: 458
+Mapping Type: Block Major
+Total Time (ns): 21677748.000000
+Average Time Per Pixel (ns): 58.004078
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 22425502.000000
+Average Time Per Pixel (ns): 60.004875
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 22302031.000000
+Average Time Per Pixel (ns): 59.674499
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 22912405.000000
+Average Time Per Pixel (ns): 61.307702
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 22448986.000000
+Average Time Per Pixel (ns): 60.067712
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 22059148.000000
+Average Time Per Pixel (ns): 59.024606
+
+Rotation: 0, Width: 816, Height: 458
+Mapping Type: Row Major
+Total Time (ns): 905.000000
+Average Time Per Pixel (ns): 0.002422
+
+Rotation: 90, Width: 458, Height: 816
+Mapping Type: Row Major
+Total Time (ns): 18422822.000000
+Average Time Per Pixel (ns): 49.294733
+
+Rotation: 180, Width: 816, Height: 458
+Mapping Type: Row Major
+Total Time (ns): 12982141.000000
+Average Time Per Pixel (ns): 34.736870
+
+Rotation: 0, Width: 816, Height: 458
+Mapping Type: Col Major
+Total Time (ns): 860.000000
+Average Time Per Pixel (ns): 0.002301
+
+Rotation: 90, Width: 458, Height: 816
+Mapping Type: Col Major
+Total Time (ns): 18397951.000000
+Average Time Per Pixel (ns): 49.228185
+
+Rotation: 180, Width: 816, Height: 458
+Mapping Type: Col Major
+Total Time (ns): 24223489.000000
+Average Time Per Pixel (ns): 64.815826
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Col Major
+Total Time (ns): 18444532.000000
+Average Time Per Pixel (ns): 49.352823
+
+Rotation: 0, Width: 816, Height: 458
+Mapping Type: Block Major
+Total Time (ns): 1227.000000
+Average Time Per Pixel (ns): 0.003283
+
+Rotation: 90, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 23052435.000000
+Average Time Per Pixel (ns): 61.682387
+
+Rotation: 180, Width: 816, Height: 458
+Mapping Type: Block Major
+Total Time (ns): 21613334.000000
+Average Time Per Pixel (ns): 57.831723
+
+Rotation: 180, Width: 816, Height: 458
+Mapping Type: Row Major
+Total Time (ns): 13088309.000000
+Average Time Per Pixel (ns): 35.020948
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Block Major
+Total Time (ns): 22723110.000000
+Average Time Per Pixel (ns): 60.801198
+
+Rotation: 270, Width: 458, Height: 816
+Mapping Type: Row Major
+Total Time (ns): 19152471.000000
+Average Time Per Pixel (ns): 51.247086
+

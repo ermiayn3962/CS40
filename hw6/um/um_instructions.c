@@ -19,6 +19,7 @@
 #include <math.h>
 #include <uarray.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 
 /*  instruction
@@ -79,53 +80,32 @@ static void input(UArray_T registers, int c);
  ************************/
 void process_instructions(UM_Memory memory)
 {
-       assert(memory != NULL);
-//        printf("we made it heheh \n");
-
-        Seq_T zero_segment = get_segment(memory, 0);
-        // fprintf(stderr, "zero segment length: %i\n", Seq_length(zero_segment)); //testing
-
+        assert(memory != NULL);
 
         /* Creating the registers */
         UArray_T registers = UArray_new(8, sizeof(uint32_t));
         assert(UArray_length(registers) == 8);
         
-        // fprintf(stderr, "\n");
-        // for (int i = 0; i < UArray_length(registers); i++) {
-        //         uint32_t *val = UArray_at(registers, i);
-        //         fprintf(stderr, "Value in register %i is %u\n", i, *val);
-        // }
-        // fprintf(stderr, "\n"); //testing
-
-
         uint32_t counter = 0;
-        // fprintf(stderr, "length of 0th segment: %i\n", 
-        //         Seq_length(zero_segment)); //testing
-        while(counter < (uint32_t) Seq_length(zero_segment)) {
-                // fprintf(stderr, "\nCOUNTER: %i\n", counter);
+        bool loop = true;
 
-                // fprintf(stderr, "COUNTER IS %i\n", counter ); //testing 
+        while (loop) {
+                Seq_T zero_segment = get_segment(memory, 0);
+                /* grab next instruction to be executed */
                 instruction temp = unpack_word(*(uint32_t *) Seq_get
                                    (zero_segment, counter));
+                                   
+                assert(counter < (uint32_t) Seq_length(zero_segment));
                 counter++;
 
                 if (temp->command == HALT) {
-                        // fprintf(stderr, "Halted XD\n");
                         free(temp);
                         UArray_free(&registers);
+                        loop = false;
                         return;
                 }
-
+        
                 call_commands(memory, temp, registers, &counter);
-                assert(counter < (uint32_t) Seq_length(zero_segment));
-
-                // fprintf(stderr, "\n");
-                // for (int i = 0; i < UArray_length(registers); i++) {
-                //         // fprintf(stderr, "Value in register %i is %u\n", i, *(uint32_t *) UArray_at(registers, i));
-                // } //testing
-                // fprintf(stderr, "\n");
-                
-
                 free(temp);
         } 
         UArray_free(&registers);
@@ -140,7 +120,7 @@ void process_instructions(UM_Memory memory)
  *      UM_Memory memory: the struct containing the memory for the program
  *      instruction command: a pointer to an instruction struct
  *      UArray_T registers: the registers used by the program
- *      int *counter: the counter that keeps track of instructions executed
+ *      uint32_t *counter: the counter that keeps track of instructions executed
  *
  * Return: 
  *      Nothing (void)
@@ -157,62 +137,12 @@ static void call_commands(UM_Memory memory, instruction command,
 {
         /* save values from struct for easier access */
         Um_opcode opcode = command->command;
-        // fprintf(stderr, "Command: %u\n", command->command);
         uint32_t ra = command->a;
-        // fprintf(stderr, "a: %u\n", command->a);
-
         uint32_t rb = command->b;
-        // fprintf(stderr, "b: %u\n", command->b);
-
         uint32_t rc = command->c;
-        // fprintf(stderr, "c: %u\n", command->c);
-
         uint32_t val = command->val;
-        // fprintf(stderr, "val: %u\n", command->val);
-
-        // switch
-        // if (op == CMOV) {
-        //         conditional_move(registers, ra, rb, rc);
-        
-        // } else if (op == SLOAD) {
-        //         segmented_load(memory, registers, ra, rb, rc);
-
-        // } else if (op == SSTORE) {
-        //         segmented_store(memory, registers, ra, rb, rc);
-                
-        // } else if (op == ADD) {
-        //         addition(registers, ra, rb, rc);
-                
-        // } else if (op == MUL) {
-        //         multiplication(registers, ra, rb, rc);
-                
-        // } else if (op == DIV) {
-        //         division(registers, ra, rb, rc);
-                
-        // } else if (op == NAND) {
-        //         bitwise_nand(registers, ra, rb, rc);
-                
-        // } else if (op == ACTIVATE) {
-        //         map_segment(memory, registers, rb, rc);
-                
-        // } else if (op == INACTIVATE) {
-        //         unmap_segment(memory, registers, rc);
-        // } else if (op == OUT) {
-        //         output(registers, rc);
-                
-        // } else if (op == IN) {
-        //         input(registers, rc);
-                
-        // } else if (op == LOADP) {
-        //         load_program(memory, registers, counter, rb, rc);
-                
-        // } else if (op == LV) {
-        //         load_value(registers, ra, val);
-        // }   
-
-
-
-
+     
+        /* switch statement to process instructions */
         switch (opcode) {
 		case CMOV:   
                         conditional_move(registers, ra, rb, rc);
@@ -256,9 +186,6 @@ static void call_commands(UM_Memory memory, instruction command,
                         load_value(registers, ra, val);
                         break;
 		}
-
-
-
 }
 
 
@@ -282,11 +209,8 @@ static void call_commands(UM_Memory memory, instruction command,
  ************************/
 instruction unpack_word(uint32_t word)
 { 
-        // fprintf(stderr, "This is the word: %u\n", word);
         uint32_t a, b, c;
         uint32_t command = Bitpack_getu(word, 4, 28);
-
-        // fprintf(stderr, "command is %u\n", command);
 
         if (command > 13) {
                 exit(EXIT_FAILURE);
@@ -299,19 +223,14 @@ instruction unpack_word(uint32_t word)
                         a = Bitpack_getu(word, 3, 25);
                         int value = Bitpack_getu(word, 25,0);
 
-                        // fprintf(stderr, "loadval\n");
-
                         loadVal->a = a;
-                        // fprintf(stderr, "a is %u\n", loadVal->a);
-
                         loadVal->val = value;
-
-                        /* These will not be used if instruction is LoadVal */
+                        /* b and c are not used with LoadVal instruction */
                         loadVal->b = 0;
                         loadVal->c = 0;
+
                 } else {
                         /* sets values for the three-register commands */
-
                         a = Bitpack_getu(word, 3, 6);
                         b = Bitpack_getu(word, 3, 3);
                         c = Bitpack_getu(word, 3, 0);
@@ -320,13 +239,7 @@ instruction unpack_word(uint32_t word)
                         loadVal->b = b;
                         loadVal->c = c;
                         loadVal->command = command;
-
-                        // fprintf(stderr, "a is %u\n", loadVal->a);
-                        // fprintf(stderr, "b is %u\n", loadVal->b);
-                        // fprintf(stderr, "c is %u\n", loadVal->c);
-                        // fprintf(stderr, "command is %u\n", loadVal->command);
                 }
-
                 return loadVal; 
         }       
 }
@@ -355,21 +268,12 @@ instruction unpack_word(uint32_t word)
 static void conditional_move(UArray_T registers, int a, int b, int c)
 {
         assert(registers != NULL);
-        
-        // fprintf(stderr, "a: %u, b: %u, c: %u\n", a, b, c);
-        
+
         uint32_t *rb = UArray_at(registers, b);
         uint32_t *rc = UArray_at(registers, c);
         uint32_t *ra = UArray_at(registers, a);
 
-        // fprintf(stderr, "\nIN CONDITIONAL MOVE\n");
-        // fprintf(stderr, "\nra = %u\n", *ra);
-        // fprintf(stderr, "\n rb = %u\n", *rb);
-        // fprintf(stderr, "\n rc = %u\n", *rc);
-
-
-
-        /* register c needs to hold 0 for the values to be updated */
+        /* register c needs to not hold 0 for the values to be updated */
         if (*rc != 0) {
                 *ra = *rb;
         }
@@ -398,22 +302,18 @@ static void conditional_move(UArray_T registers, int a, int b, int c)
 static void addition(UArray_T registers, int a, int b, int c)
 {
         assert(registers != NULL);
-        // fprintf(stderr, "a: %u, b: %u, c: %u\n", a, b, c);
-        
+
         uint32_t *rb = UArray_at(registers, b);
         uint32_t *rc = UArray_at(registers, c);
         uint32_t *ra = UArray_at(registers, a);
-
-        /* perform the computation and mod the result to fit in 32 bits */
-        // fprintf(stderr, "rb + rc: %i\n", (*rb + *rc));
-        // fprintf(stderr, "rb + rc mod 2^32: %i\n", (*rb + *rc) % (uint32_t) pow(2, 32));
 
         *ra = (*rb + *rc);      
 }
 
 /********** multiplication ********
  *
- * Processes the multiplication
+ * Processes the multiplication command
+ *
  * Parameters:
  *     UArray_T registers: the register array
  *     int a: a register value
@@ -433,13 +333,11 @@ static void addition(UArray_T registers, int a, int b, int c)
 static void multiplication(UArray_T registers, int a, int b, int c)
 {
         assert(registers != NULL);
-        // fprintf(stderr, "a: %u, b: %u, c: %u\n", a, b, c);
         
         uint32_t *rb = UArray_at(registers, b);
         uint32_t *rc = UArray_at(registers, c);
         uint32_t *ra = UArray_at(registers, a);
 
-        /* perform the computation and mod the result to fit in 32 bits */
         *ra = (*rb * *rc);
 }
 
@@ -466,6 +364,7 @@ static void multiplication(UArray_T registers, int a, int b, int c)
 static void division(UArray_T registers, int a, int b, int c)
 {
         assert(registers != NULL);
+
         uint32_t *rb = UArray_at(registers, b);
         uint32_t *rc = UArray_at(registers, c);
         uint32_t *ra = UArray_at(registers, a);
@@ -496,7 +395,6 @@ static void division(UArray_T registers, int a, int b, int c)
 static void bitwise_nand(UArray_T registers, int a, int b, int c)
 {
         assert(registers != NULL);
-        // fprintf(stderr, "a: %u, b: %u, c: %u\n", a, b, c);
         
         uint32_t *rb = UArray_at(registers, b);
         uint32_t *rc = UArray_at(registers, c);
@@ -504,9 +402,6 @@ static void bitwise_nand(UArray_T registers, int a, int b, int c)
 
         /* perform the nand operation */
         *ra = ~(*rb & *rc);
-        // fprintf(stderr, "NAND RESULT BEFORE:%i\n",  ~(*rb & *rc));
-        // fprintf(stderr, "NAND RESULT BEFORE:%u\n", *ra);
-
 }
 
 /********** output ********
@@ -530,12 +425,10 @@ static void bitwise_nand(UArray_T registers, int a, int b, int c)
 static void output(UArray_T registers, int c)
 {      
         assert(registers != NULL);
+
         uint32_t *rc = UArray_at(registers, c);
-        // fprintf(stderr, "outputting\n");
 
         assert(*rc < 256);
-
-        // fprintf(stderr, "outputting after\n");
 
         putchar(*rc);
 }
@@ -564,8 +457,6 @@ static void input(UArray_T registers, int c)
         
         /* grab data and its destination */
         uint8_t data = getchar();
-        // uint8_t data = fs
-
         uint32_t *rc = UArray_at(registers, c);
 
         if ((char) data == EOF) {

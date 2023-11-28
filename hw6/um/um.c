@@ -20,13 +20,28 @@ FILE *open_file(char *filename);
 
 int main(int argc, char **argv) 
 {
-    assert(argc == 2);
-    FILE *umfile = open_file(argv[1]);
-    
-    run_um(umfile);
+        if (argc != 2) {
+                fprintf(stderr, 
+                "Usage: ./um some_program.um < testinput.txt > output.txt\n");
+                
+                exit(EXIT_FAILURE);
+        }
+
+        FILE *umfile = open_file(argv[1]);
+        
+        /* Checking if the file is empty */
+        if (NULL != umfile) {
+                fseek(umfile, 0, SEEK_END);
+                int size = ftell(umfile);
+
+                assert(size != 0);
+                fseek(umfile, 0, SEEK_SET);
+        }
+
+        run_um(umfile);
 
 
-    return 0;
+        return 0;
 }
 
 /********** open_file ********

@@ -219,7 +219,7 @@ void apply_DCT_to_VCS(int col, int row, A2Methods_UArray2 vcs_array,
         int len = blocksize * blocksize;
 
         /* Mapping the 1 x 1 blocked UArray2 to the 2 x 2 blocked UArray2 */
-        float a = blockData->a / 511.0;
+        float a = blockData->a / 63.0;
         float b = reverse_quantize(blockData->b);
         float c = reverse_quantize(blockData->c);
         float d = reverse_quantize(blockData->d);
@@ -287,7 +287,7 @@ void apply_VCS_to_DCT(int col, int row, A2Methods_UArray2 array2, void *elem,
         d_tmp = (Y4 - Y3 - Y2 + Y1) / 4.0;
 
         /* Convert a to a 9-bit quantized unsigned value */
-        unsigned a = round(a_tmp * 511);
+        unsigned a = round(a_tmp * 63);
 
         /* Convert b, c, d to 5-bit quantized signed values */
         signed b = quantize(b_tmp);
@@ -437,7 +437,7 @@ static signed quantize (float x)
         if (x > max) return 15;
         else if (x < min) return -15;
 
-        return round(x * 50);
+        return round(x * 103);
 }
 
 /* reverse_quantize
@@ -458,5 +458,5 @@ static float reverse_quantize (signed x)
         if (x > max) return 0.3;
         else if (x < min) return -0.3;
 
-        return x / 50.0;
+        return x / 103.0;
 }

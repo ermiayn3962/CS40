@@ -20,9 +20,8 @@
 #include <seq.h>
 #include <uarray.h>
 
-
-
 typedef struct UM_Memory *UM_Memory;
+
 
 UM_Memory UM_Memory_New(FILE *file);
 void clean_up_memory(UM_Memory *memory);
@@ -35,7 +34,8 @@ void unmap_segment(UM_Memory memory, UArray_T registers, int c);
 void segmented_load(UM_Memory memory, UArray_T registers, int a, int b, int c);
 void segmented_store(UM_Memory memory, UArray_T registers, int a, int b, int c);
 
-void load_program(UM_Memory memory, UArray_T registers, uint32_t *counter, int b, int c);
+void load_program(UM_Memory memory, UArray_T registers, uint32_t *counter,
+                  int b, int c);
 
 
 #endif

@@ -1,0 +1,115 @@
+Names: Yoda Ermias (yermia01) & Maiah Islam (mislam07)
+Acknowledgments: TAs in office hours, Hanson C Interfaces and Implementations
+
+All parts have been correctly implemented.
+
+Changes made since design:
+A new module has been created to handle all memory processing. 
+Module for input and output was not needed.
+Reuse of segment IDs is now accounted for.
+
+Architecture: 
+	Um.c: This module contains main, which is used to open the provided program
+  file and call the driver function. This module does not know anything about
+  the underlying representations of the universal emulator. 
+
+	Um_runner.h: This module is responsible for calling the necessary functions
+  to run the program. It creates an instance of a memory struct that will be
+  used throughout the whole program, calls the function to process the 
+  instructions, and frees the memory associated with the program. This module
+  is not necessarily responsible for any particular abstraction, but instead 
+  puts the pieces of the program together. It knows that memory is 
+  represented as a UM_Memory struct, but it does not know anything else about
+  how the program is run and how memory is used.
+
+	Um_instructions.h: This module is responsible for processing the instructions
+  contained in the zero segment that are not related to updating segmented
+  memory. It unpacks a single word at a time and calls the necessary command
+  to update the registers (or memory segments). This module also holds the
+  registers used in the program but is not aware of how memory is stored and
+  allocated within the segments. 
+
+	Memory.h: This module is responsible for handling how memory is created and
+  used in the universal emulator. This module knows how memory is created and
+  stored. It also processes the instruction related to memory (map, unmap,
+  segmented load and store, and load program). The memory in this program is
+  used to help execute the provided program by storing the instructions.
+  Memory is represented through a struct that contains a sequence of sequences
+  to represent the segmented memory and a sequence that will contain the IDs
+  of previously unmapped segments so that segments can be reused.  
+
+50 million instructions: 
+  It will take about 9.4 seconds for our UM to execute 50 million
+  instructions. We calculated how long it midmark.um took, which has about 80
+  million instructions. This took about 15 seconds. We computed how many
+  instructions our UM could do in 1 second, which was about 5.3 million and
+  used that to calculate how long 50 million instructions would take.
+
+Testing:
+  Add.um: Tests the add, loadvalue, output, and halt instructions by loading 
+  two registers with different numbers and making sure the third register
+  contains the sum of the two. The third register is outputted and then 
+  the test should stop (testing halt command).
+
+  Halt-verbose.um: Tests the loadvalue, output, and halt by loading registers,
+  outputting their values and then halting the test.
+
+  Halt.um: Tests the halt instruction by making sure the test stops as soon as
+  it starts.
+
+  Input.um: Tests the input, output and halt instructions by reading a value
+  into a register and then outputting the value in the same register.
+
+  Load-program.um: Tests load program, loadval, halt and output instructions by
+  loading registers with different values and then calling load program to make
+  sure the new instructions are executed. 
+
+  Load-program-other-seg.um: Tests load program, map, loadval, segment store,
+  and halt commands by calling load program on a segment that is not the zero
+  segment so that the counter has to be updated.
+
+  Loadval.um: Tests loadvalue and output instructions by loading registers with
+  different values and making sure the registers are being updated by printing
+  what is in them.
+
+  Loadval-single.um: Tests a single load val and halt command by loading a
+  register with a value and then halting and making sure the test can run.
+
+  Mapping.um: Tests loadvalue, map, unmap, and halt instructions by loading
+  values into registers and mapping segments with those values and then
+  unmapping the segment that was just created. 
+
+  Memory.um: Large memory test that tests loadvalue, map segment, 
+  unmap segment, segmented store, segmented load, output and halt
+  instructions by loading values into registers, loading the segments
+  with the same values, unmapping them and then outputting the values 
+  in the segments at the end.
+
+  Multiply.um: Tests the multiplication, loadvalue, output, and halt
+  instructions by loading two registers with different numbers and making sure
+  the third register contains the result of multiplying the two. The third
+  register is outputted and then the test should stop (testing halt command).
+
+  Print-six.um: Test the output, loadvalue, add and halt instructions by loading
+  values into registers, adding them, and then printing the output. 
+
+  Segment.um: Tests the loadval, map, segmented store, output and halt
+  instructions by loading values into registers, mapping a segment from those
+  registers, storing a value into a specific segment index, and outputting
+  what was at the register.  
+
+  Division.um: Tests the divide, loadval, output, and halt command by loading
+  registers with different values and then outputting the result of that
+  computation, which should be stored in a third register. 
+
+  Conditional-move.um: tests the loadval, conditional move, output and halt
+  commands by loading a zero into a register (the criteria for conditional move
+  to execute) and making sure the right values were updated. 
+
+  Nand.um: Tests the loadval, output, halt and nand commands by loading two
+  registers with zeros and nanding them to get an output of 2^32 - 1.
+
+Time spent: 
+	Analyzing: 3 hours
+	Design: 5 hours
+	Solving (post-analysis): 20 hours

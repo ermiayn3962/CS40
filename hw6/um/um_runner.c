@@ -12,10 +12,10 @@
  **************************************************************/
 
 #include "um_runner.h"
-#include "file_io.h"
 #include "memory.h"
 
 #include <uarray.h>
+#include <assert.h>
 
 
 /********** run_um ********

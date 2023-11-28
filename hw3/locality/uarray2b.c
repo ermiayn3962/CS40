@@ -40,7 +40,11 @@ static void initializeBlocks(int col, int row, UArray2_T uArr2, void *elem,
 static void apply_freeUArrays(int col, int row, UArray2_T uArr2, void *elem, 
                               void *cl);
 
-
+void print_VCS(VCS_data data){
+    fprintf(stderr,"Y: %i\n", data->Y);
+    fprintf(stderr,"Pb: %i\n",  data->Pb);
+    fprintf(stderr,"Pr: %i\n", data->Pr);
+}
 /********** UArray2b_new ********
  *
  * Allocates heap memory for an instance of a UArray2b

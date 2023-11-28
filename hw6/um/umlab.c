@@ -59,7 +59,6 @@ static inline Um_instruction division(Um_register a, Um_register b, Um_register 
 
 Um_instruction three_register(Um_opcode op, int ra, int rb, int rc)
 {
-        //which should generate a bitpacked UM instruction using the provided opcode and three register identifiers.
         Um_instruction word = 0;
         word = (int) Bitpack_newu(word, 4, 28, op);
         word = (int) Bitpack_newu(word, 3, 0, rc);
@@ -137,7 +136,6 @@ static inline void append(Seq_T stream, Um_instruction inst)
 {
         /* size of instruction must be less than size of a pointer 8 bytes */
         assert(sizeof(inst) <= sizeof(uintptr_t));
-        /* casting instruction to a uintptr_t and then casting that to a void pointer, needs to be void because SeqAddhi types must match */
         Seq_addhi(stream, (void *)(uintptr_t)inst);
 }
 
@@ -193,8 +191,8 @@ void build_load_program(Seq_T stream)
         append(stream, output(r1));
         append(stream, halt());
 
-
 }
+
 
 void build_cond_mv_test(Seq_T stream)
 {
@@ -387,10 +385,22 @@ void build_add_test(Seq_T stream)
 
 }
 
-// void build_add-verbose_test(Seq_T stream)
-// {
+void build_load_program_other_seg(Seq_T stream)
+{
+        append(stream, loadval(r0, 1));
+        append(stream, loadval(r1, '!'));
+        append(stream, loadval(r2, 0));
+        append(stream, loadval(r3, 2));
+
+        append(stream, map(r0, r3));
+
         
-// }
+
+        /* Loading info into segment 1*/
+        append(stream, store_seg(r0, r2, r2));
+        append(stream, load_prg(r0, r2));
+        append(stream, halt());    
+}
 
 void build_mult_test(Seq_T stream)
 {

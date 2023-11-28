@@ -24,6 +24,7 @@ extern void build_division_test(Seq_T stream);
 extern void build_nand_test(Seq_T stream);
 extern void build_cond_mv_test(Seq_T stream);
 extern void build_load_val_single(Seq_T stream);
+extern void build_load_program_other_seg(Seq_T stream);
 
 
 /* The array `tests` contains all unit tests for the lab. */
@@ -49,7 +50,8 @@ static struct test_info {
         { "division", NULL, "", build_division_test},
         { "nand", NULL, "", build_nand_test},
         { "conditional-move", NULL, "", build_cond_mv_test},
-        { "loadval-single", NULL, "", build_load_val_single}
+        { "loadval-single", NULL, "", build_load_val_single},
+        { "load-program-other-seg", NULL, "", build_load_program_other_seg}
 };
 
   

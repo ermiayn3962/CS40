@@ -34,9 +34,8 @@ struct UM_Memory
 };
 
 
-static void clean_instructions(UM_Memory memory, int segPos);
+static void clean_instructions(Seq_T segment);
 static Seq_T populate_sequence(FILE *file);
-// static void update_ids(UM_Memory memory, int id);
 static uint32_t getBytes(FILE *input, int num_bytes);
 
 
@@ -126,22 +125,16 @@ Seq_T get_segment(UM_Memory memory, int id)
 static Seq_T populate_sequence(FILE *file)
 {
         assert(file != NULL);
-        // fprintf(stderr, "inside populate sequence\n");
         Seq_T temp = Seq_new(0);
 
         uint32_t *instruction;
 
-        // fprintf(stderr, " before while\n");
-
         while (!feof(file)) {
-        // fprintf(stderr, "inside while\n");
-
                 instruction = malloc(sizeof(uint32_t));
-
                 assert(instruction != NULL);
+
+                /* add instructions to the zero segment*/
                 *instruction = getBytes(file, 4);
-            
-                // fprintf(stderr, "instruction: %u\n", *instruction);  
                 Seq_addhi(temp, instruction);  
         }  
 
@@ -170,17 +163,14 @@ static uint32_t getBytes(FILE *input, int num_bytes)
 {
         assert(input != NULL);
         uint32_t word = 0;
-        // fprintf(stderr, "inside getBytes\n");
         int start = (num_bytes * 8) - 8;
+
         for (int lsb = start; lsb >= 0; lsb -= 8) {
                 int byte = getc(input);
-                // assert(byte != EOF);
                 if (byte != EOF) {
                         word = Bitpack_newu(word, 8, lsb, byte);
 
                 }
-
-                
         }
 
         return word;
@@ -212,31 +202,19 @@ void map_segment(UM_Memory memory, UArray_T registers, int b, int c)
         
         uint32_t *rb = UArray_at(registers, b);
         uint32_t *rc = UArray_at(registers, c);
-
         int pos;
+
         if (Seq_length(memory->ID) == 0) {
-                /* Appending a new segment empty */
+                /* Just add a new segment to sequence directly */
                 Seq_addhi(memory->segments, Seq_new(0));
-
-                /* Adding empty segment to segment IDs */
-                // int *addy = malloc(sizeof(*addy));
-                // *addy = Seq_length(memory->segments) - 1;
-                // Seq_addhi(memory->ID, addy);
-                // pos = *addy;
                 pos = Seq_length(memory->segments) - 1;
-                // fprintf(stderr, "made new segment\n");
-
-                // *rb = pos;
+               
         } else {
-                // fprintf(stderr, "reused an id\n");
+                /* reusing an unmapped segment */
                 int *id = (int *) Seq_remlo(memory->ID);
                 pos = *id;
                 free(id);
-                // update_ids(memory, pos);
-                // *rb = pos;
         }
-        // fprintf(stderr, "mapping: pos is %i\n", pos);
-
 
         /* Creating a new segment of size c */
         Seq_T new_seg = Seq_new(0);
@@ -247,56 +225,12 @@ void map_segment(UM_Memory memory, UArray_T registers, int b, int c)
         } 
 
         Seq_T temp = Seq_get(memory->segments, pos);
-        // clean_instructions(memory, pos); //CHECK THIS
-
         Seq_free(&temp);
         Seq_put(memory->segments, pos, new_seg);
 
-
-
-        // fprintf(stderr, "reg b contains %u\n", *(uint32_t *) UArray_at(registers, b));
-
         *rb = pos;      
-        // fprintf(stderr, "After mapping, rb = %u\n", *(uint32_t *) UArray_at(registers, b));
 }
 
-
-/********** update_ids ********
- *
- * Creates an updated segment ID sequence without the inputted id 
- *
- * Parameters:
- *     UM_Memory memory: the struct containing memory for the program
- *     int id: the segment id
- *
- * Return: 
- *      Nothing (void)
- *
- * Expects
- *      UM_Memory memory to not be NULL
- *      
- * Notes:
- *     May CRE if memory is NULL
- * 
- ************************/
-// static void update_ids(UM_Memory memory, int id) 
-// {
-//         assert(memory != NULL);
-//         Seq_T newIDs = Seq_new(0);
-
-//         for (int i = 0; i < Seq_length(memory->ID); i++) {
-//                 if (*(int *) Seq_get(memory->ID, i) != id) {
-//                         Seq_addhi(newIDs, Seq_get(memory->ID, i));
-//                 } else {
-//                         int *temp = Seq_get((memory)->ID, i);
-//                         free(temp);
-
-//                 }
-//         }
-        
-//         Seq_free(&(memory)->ID);
-//         memory->ID = newIDs;
-// }
 
 
 /********** unmap_segment ********
@@ -327,8 +261,7 @@ void unmap_segment(UM_Memory memory, UArray_T registers, int c)
         /* Getting the sequence of instructions at memory segment c*/
         Seq_T temp = Seq_get(memory->segments, *rc);
 
-        clean_instructions(memory, *rc);
-
+        clean_instructions(temp);
         Seq_free(&temp);
 
         /* Putting an empty segment at $m[$r[c]] */
@@ -336,12 +269,11 @@ void unmap_segment(UM_Memory memory, UArray_T registers, int c)
         assert((Seq_T) Seq_get(memory->segments, *rc) != NULL);
         assert(Seq_length(Seq_get(memory->segments, *rc)) == 0);
 
-        int *addy = malloc(sizeof(*rc));
+        /* place the ID in ID sequence to be reused later */
+        int *addy = malloc(sizeof(*addy));
         *addy = *rc;
 
         Seq_addhi(memory->ID, addy); 
-
-        // free(addy);
 }
 
 
@@ -372,17 +304,9 @@ void segmented_load(UM_Memory memory, UArray_T registers, int a, int b, int c)
         
         uint32_t *ra = UArray_at(registers, a);
         uint32_t *rb = UArray_at(registers, b);
-        // fprintf(stderr, "reg b in seg load is %u\n", (b));
-
-        // fprintf(stderr, "reg rb in seg load is %u\n", (*rb));
         uint32_t *rc = UArray_at(registers, c);
-        // fprintf(stderr, "reg c in seg load is %u\n", (*rc));
 
-        
-        // fprintf(stderr, "SIZE OF SEGMENT IS: %i\n", Seq_length(Seq_get(memory->segments, *rb)));
-        // fprintf(stderr, "Value at 4408: %i\n", *(int *)Seq_get(Seq_get(memory->segments, 0), 4408));
-        // fprintf(stderr, "SIZE OF SEGMENT IS: %i\n", Seq_length(memory->segments));
-
+        /* grab the sequence from rb and the element to be loaded from rc */
         Seq_T curr_seq = Seq_get(memory->segments, *rb);
         *ra = *(uint32_t *) Seq_get(curr_seq, *rc);
 }
@@ -413,20 +337,11 @@ void segmented_store(UM_Memory memory, UArray_T registers, int a, int b, int c)
 {
         assert(memory != NULL && registers != NULL);
        
-        // fprintf(stderr, "a: %i, b: %i, c: %i\n", a, b, c);
-        
         uint32_t *ra = UArray_at(registers, a);
-        // fprintf(stderr, "ra contains %u\n", *ra);
-        
         uint32_t *rb = UArray_at(registers, b);
-        // fprintf(stderr, "rb contains %u\n", *rb);
-
-       /* This is the data to be stored */
         uint32_t *rc = UArray_at(registers, c);
-        // fprintf(stderr, "rc contains %u\n", *rc);
 
-   
-
+       /* The data to be stored comes from rc */
         uint32_t *data = malloc(sizeof(*data));
         *data = *rc;
 
@@ -436,7 +351,6 @@ void segmented_store(UM_Memory memory, UArray_T registers, int a, int b, int c)
         free(temp); 
         
         Seq_put(curr_seq, *rb, data);
-
 }
 
 
@@ -470,36 +384,30 @@ void load_program(UM_Memory memory, UArray_T registers, uint32_t *counter,
         uint32_t *rb = UArray_at(registers, b);
         /* rc will be the counter */ 
         uint32_t *rc = UArray_at(registers, c);
-        // fprintf(stderr, "rb: %u\n", *rb);
 
-        // if (*rb != 0) {
-                // Seq_T dup = Seq_get(memory->segments, *rb); //is this duplicating or grabbing the actual segment??
+        if (*rb != 0) {
                 Seq_T dup = Seq_new(0); 
 
-                for (int i = 0; i < Seq_length(Seq_get(memory->segments, *rb)); i++) {
-                        uint32_t *instruction = malloc(sizeof(uint32_t *));
-                        *instruction = *(uint32_t *) Seq_get(Seq_get(memory->segments, *rb), i);
-                        fprintf(stderr, "instruction: %u\n", *instruction);
+                /* make a deep copy of the desired segment */
+                int length = Seq_length(Seq_get(memory->segments, *rb));
+                for (int i = 0; i < length; i++) {
+                        uint32_t *instruction = malloc(sizeof(*instruction));
+                        Seq_T curr_seq = Seq_get(memory->segments, *rb);
+                        *instruction = *(uint32_t *) Seq_get(curr_seq, i);
                         Seq_addhi(dup, instruction);
                 }
                 
-                // clean_instructions(memory, 0);
-                Seq_put(memory->segments, 0, dup);
-                assert(*rc < (uint32_t) Seq_length(dup));       
-        // }
+                /* free memory associated with old zero segment */
+                Seq_T old_seg = Seq_put(memory->segments, 0, dup);
+                clean_instructions(old_seg);
+                Seq_free(&old_seg);
 
-        // fprintf(stderr, "PRINTING WORDS IN 0 SEGMENT\n");
-        // for (int i = 0; i < Seq_length(Seq_get(memory->segments, 0)); i++) {
-        //         uint32_t word = *(uint32_t *) Seq_get(dup, i);
-        //         fprintf(stderr, "word at %i is %u\n", i, word);
-        // }
-        // fprintf(stderr, "\n");
+                /* check that counter is in range */
+                length = Seq_length(Seq_get(memory->segments, 0));
+                assert(*rc < (uint32_t) length);       
+        }
 
-        /* make sure counter isn't out of bounds */
-        // fprintf(stderr, "rc = %u, length of dup = %u\n", *rc, Seq_length(dup));
-        
         *counter =  *rc;
-
 }
 
 
@@ -508,27 +416,27 @@ void load_program(UM_Memory memory, UArray_T registers, uint32_t *counter,
  * Frees memory used by instructions within a segment
  *
  * Parameters:
- *     UM_Memory memory: the struct containing memory for the program
- *     int segPos: the current segment position
+ *     Seq_T segment: the segment whose elements are to be cleared
  *
  * Return: 
  *      Nothing (void)
  *
  * Expects
- *      UM_Memory memory to not be NULL
+ *      Seq_T segment to not be NULL
  *      
  * Notes:
- *     May CRE if memory is NULL
+ *     May CRE if segment is NULL
  * 
  ************************/
-static void clean_instructions(UM_Memory memory, int segPos)
+static void clean_instructions(Seq_T segment)
 {
-        assert(memory != NULL);
+        assert(segment != NULL);
 
-        int length = Seq_length(Seq_get(memory->segments, segPos));
+        int length = Seq_length(segment);
+
+        /* delete the instructions allocated in each segment */
         for (int j = 0; j < length; j++) {
-                uint32_t *num= (uint32_t *) Seq_get(Seq_get(memory->segments,
-                                                            segPos), j);
+                uint32_t *num= (uint32_t *) Seq_get(segment, j);
                 free(num);
         }
 }
@@ -552,18 +460,14 @@ static void clean_instructions(UM_Memory memory, int segPos)
  ************************/
 void clean_up_memory(UM_Memory *memory)
 {
-        //DO NOT FORGET TO DELETE
-        //NOTE: we have have to clean up other segments besides 0th
-        
         assert(memory != NULL);
         assert(*memory != NULL);
-        
 
         /* freeing segments */
         for (int i = 0; i < Seq_length((*memory)->segments); i++)
         {
                 /* clean up instructions at current segment */
-                clean_instructions(*memory, i);
+                clean_instructions(Seq_get((*memory)->segments, i));
 
                 Seq_T temp = Seq_get((*memory)->segments, i);
                 Seq_free(&temp);
@@ -576,11 +480,8 @@ void clean_up_memory(UM_Memory *memory)
                 free(temp);
         }
 
-        
         /* free segment sequence, register array, and memory struct */
         Seq_free(&(*memory)->segments);
         Seq_free(&(*memory)->ID);
         free(*memory);
-
 }
-
