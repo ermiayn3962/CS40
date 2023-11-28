@@ -84,7 +84,7 @@ void process_instructions(UM_Memory memory)
 
         /* Creating the registers */
         // UArray_T registers = UArray_new(8, sizeof(uint32_t));
-        uint32_t *registers = malloc(sizeof(uint32_t) * 8);
+        uint32_t *registers = calloc(8, sizeof(uint32_t));
         // assert(UArray_length(registers) == 8);
         
         uint32_t counter = 0;
@@ -102,6 +102,7 @@ void process_instructions(UM_Memory memory)
                 if (temp->command == HALT) {
                         free(temp);
                         // UArray_free(&registers);
+                        free(registers);
                         loop = false;
                         return;
                 }
@@ -110,6 +111,8 @@ void process_instructions(UM_Memory memory)
                 free(temp);
         } 
         // UArray_free(&registers);
+        free(registers);
+
 }
 
 
