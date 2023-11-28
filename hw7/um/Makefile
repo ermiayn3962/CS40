@@ -9,7 +9,7 @@ IFLAGS = -I. -I/comp/40/build/include -I/usr/sup/cii40/include/cii
 # Compile flags
 # Set debugging information, allow the c99 standard,
 # max out warnings, and use the updated include path
-CFLAGS = -g -std=c99 -Wall -Wextra -Werror -Wfatal-errors -pedantic $(IFLAGS)
+CFLAGS = -g -O2 -std=c99 -Wall -Wextra -Werror -Wfatal-errors -pedantic $(IFLAGS)
 
 # Linking flags
 # Set debugging information and update linking path
