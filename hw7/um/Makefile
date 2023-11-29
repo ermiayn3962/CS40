@@ -14,12 +14,12 @@ CFLAGS = -g -O2 -std=c99 -Wall -Wextra -Werror -Wfatal-errors -pedantic $(IFLAGS
 # Linking flags
 # Set debugging information and update linking path
 # to include course binaries and CII implementations
-LDFLAGS = -g -L/comp/40/build/lib -L/usr/sup/cii40/lib64
+LDFLAGS = -g -lcii40-O2 -L/comp/40/build/lib -L/usr/sup/cii40/lib64
 
 # Libraries needed for linking
 # Both programs need cii40 (Hanson binaries) and *may* need -lm (math)
 # Only brightness requires the binary for pnmrdr.
-LDLIBS = -lcii40-O2 -lpnmrdr -lm -lbitpack -l40locality 
+LDLIBS = -lpnmrdr -lcii40 -lm -lbitpack -l40locality 
 
 # Collect all .h files in your directory.
 # This way, you can never forget to add
@@ -50,6 +50,3 @@ writetests: umlabwrite.o umlab.o
 
 clean:
 	rm -f $(EXECS)  *.o
-
-
-

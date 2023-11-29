@@ -34,9 +34,9 @@ struct UM_Memory
 };
 
 
-static void clean_instructions(Seq_T segment);
-static Seq_T populate_sequence(FILE *file);
-static uint32_t getBytes(FILE *input, int num_bytes);
+static inline void clean_instructions(Seq_T segment);
+static inline Seq_T populate_sequence(FILE *file);
+static inline uint32_t getBytes(FILE *input, int num_bytes);
 
 
 
@@ -122,7 +122,7 @@ Seq_T get_segment(UM_Memory memory, int id)
  *     May CRE if file or allocated memory is NULL
  * 
  ************************/
-static Seq_T populate_sequence(FILE *file)
+static inline Seq_T populate_sequence(FILE *file)
 {
         assert(file != NULL);
         Seq_T temp = Seq_new(0);
@@ -159,7 +159,7 @@ static Seq_T populate_sequence(FILE *file)
  *             there are less than word_size number of bytes left to read in
  *             input file
  */
-static uint32_t getBytes(FILE *input, int num_bytes)
+static inline uint32_t getBytes(FILE *input, int num_bytes)
 {
         assert(input != NULL);
         uint32_t word = 0;
@@ -432,7 +432,7 @@ void load_program(UM_Memory memory, uint32_t *registers, uint32_t *counter,
  *     May CRE if segment is NULL
  * 
  ************************/
-static void clean_instructions(Seq_T segment)
+static inline void clean_instructions(Seq_T segment)
 {
         assert(segment != NULL);
 

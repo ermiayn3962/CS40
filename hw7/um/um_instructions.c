@@ -48,17 +48,17 @@ typedef enum Um_opcode {
 } Um_opcode;
 
 
-static instruction unpack_word(uint32_t word);
-static void call_commands(UM_Memory memory, instruction command, 
+static inline instruction unpack_word(uint32_t word);
+static inline void call_commands(UM_Memory memory, instruction command, 
                           uint32_t *registers, uint32_t *counter);
-static void addition(uint32_t *registers, int a, int b, int c);
-static void bitwise_nand(uint32_t *registers, int a, int b, int c);
-static void multiplication(uint32_t *registers, int a, int b, int c);
-static void division(uint32_t *registers, int a, int b, int c);
-static void conditional_move(uint32_t *registers, int a, int b, int c);
-static void output(uint32_t *registers, int c);
-static void load_value(uint32_t *registers, int a, uint32_t val);
-static void input(uint32_t *registers, int c);
+static inline void addition(uint32_t *registers, int a, int b, int c);
+static inline void bitwise_nand(uint32_t *registers, int a, int b, int c);
+static inline void multiplication(uint32_t *registers, int a, int b, int c);
+static inline void division(uint32_t *registers, int a, int b, int c);
+static inline void conditional_move(uint32_t *registers, int a, int b, int c);
+static inline void output(uint32_t *registers, int c);
+static inline void load_value(uint32_t *registers, int a, uint32_t val);
+static inline void input(uint32_t *registers, int c);
 
 
 /********** process_instructions ********
@@ -136,7 +136,7 @@ void process_instructions(UM_Memory memory)
  *     May CRE if instruction command, UArray_T registers, int *counter is NULL
  * 
  ************************/
-static void call_commands(UM_Memory memory, instruction command, 
+static inline void call_commands(UM_Memory memory, instruction command, 
                           uint32_t *registers, uint32_t *counter)
 {
         /* save values from struct for easier access */
@@ -211,7 +211,7 @@ static void call_commands(UM_Memory memory, instruction command,
  *     allocation fails 
  * 
  ************************/
-instruction unpack_word(uint32_t word)
+static inline instruction unpack_word(uint32_t word)
 { 
         uint32_t a, b, c;
         uint32_t command = Bitpack_getu(word, 4, 28);
@@ -269,7 +269,7 @@ instruction unpack_word(uint32_t word)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void conditional_move(uint32_t *registers, int a, int b, int c)
+static inline void conditional_move(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
 
@@ -303,7 +303,7 @@ static void conditional_move(uint32_t *registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void addition(uint32_t *registers, int a, int b, int c)
+static inline void addition(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
 
@@ -336,7 +336,7 @@ static void addition(uint32_t *registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void multiplication(uint32_t *registers, int a, int b, int c)
+static inline void multiplication(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
         
@@ -368,7 +368,7 @@ static void multiplication(uint32_t *registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void division(uint32_t *registers, int a, int b, int c)
+static inline void division(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
 
@@ -401,7 +401,7 @@ static void division(uint32_t *registers, int a, int b, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void bitwise_nand(uint32_t *registers, int a, int b, int c)
+static inline void bitwise_nand(uint32_t *registers, int a, int b, int c)
 {
         assert(registers != NULL);
         
@@ -435,7 +435,7 @@ static void bitwise_nand(uint32_t *registers, int a, int b, int c)
  *     May CRE if registers is NULL or if outputted value is larger than 255
  * 
  ************************/
-static void output(uint32_t *registers, int c)
+static inline void output(uint32_t *registers, int c)
 {      
         // assert(registers != NULL);
 
@@ -467,7 +467,7 @@ static void output(uint32_t *registers, int c)
  *     May CRE if registers is NULL or if there is an error getting the input
  * 
  ************************/
-static void input(uint32_t *registers, int c)
+static inline void input(uint32_t *registers, int c)
 {
         // assert(registers != NULL);
         
@@ -507,7 +507,7 @@ static void input(uint32_t *registers, int c)
  *     May CRE if registers is NULL
  * 
  ************************/
-static void load_value(uint32_t *registers, int a, uint32_t val)
+static inline void load_value(uint32_t *registers, int a, uint32_t val)
 {
         // assert(registers != NULL);
         // uint32_t *ra = UArray_at(registers, a);
