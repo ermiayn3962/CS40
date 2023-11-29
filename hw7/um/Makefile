@@ -38,7 +38,7 @@ all: um
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-um: um_instructions.o um_runner.o bitpack.o memory.o um.o
+um: bitpack.o um.o 
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 writetests: umlabwrite.o umlab.o
