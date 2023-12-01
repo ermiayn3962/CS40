@@ -246,6 +246,34 @@ void build_segment_test(Seq_T stream)
 
 }
 
+void build_map_seg_test(Seq_T stream) 
+{
+        append(stream, loadval(r0, 1));
+
+        append(stream, loadval(r2, 2)); 
+
+        append(stream, map(r0, r2));
+
+        append(stream, halt());
+
+
+}
+
+void build_unmap_seg_test(Seq_T stream) 
+{
+        append(stream, loadval(r0, 1));
+
+        append(stream, loadval(r2, 2)); 
+
+        append(stream, map(r0, r2));
+
+        append(stream, unmap(r0));
+
+        append(stream, halt());
+
+
+}
+
 void build_mapping_test(Seq_T stream)
 {
         append(stream, loadval(r0, 1));

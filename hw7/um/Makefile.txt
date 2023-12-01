@@ -28,7 +28,8 @@ INCLUDES = $(shell echo *.h)
 
 ############### Rules ###############
 
-all: um writetests
+all: um
+
 
 ## Compile step (.c files -> .o files)
 
@@ -42,9 +43,6 @@ um: um_instructions.o um_runner.o bitpack.o memory.o um.o
 
 writetests: umlabwrite.o umlab.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
-
-# playground: playground.o
-# 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 # To get *any* .o file, compile its .c file with the following rule.
 %.o: %.c

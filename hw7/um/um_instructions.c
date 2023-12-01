@@ -20,6 +20,7 @@
 #include <uarray.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "memory.h"
 
 
 /*  instruction
@@ -89,12 +90,15 @@ void process_instructions(UM_Memory memory)
         bool loop = true;
 
         while (loop) {
-                Seq_T zero_segment = get_segment(memory, 0);
+                 uint32_t *zero_segment = get_segment(memory, 0);
                 /* grab next instruction to be executed */
-                instruction temp = unpack_word(*(uint32_t *) Seq_get
-                                   (zero_segment, counter));
-                                   
-                assert(counter < (uint32_t) Seq_length(zero_segment));
+                instruction temp = unpack_word(zero_segment[counter]);
+
+                uint32_t size = (uint32_t) get_seg_size(memory, 0);
+
+
+                // fprintf(stderr, "counter: %u size: %i\n", counter, size);                   
+                assert(counter < size);
                 counter++;
 
                 if (temp->command == HALT) {
