@@ -95,10 +95,8 @@ void process_instructions(UM_Memory memory)
                 instruction temp = unpack_word(zero_segment[counter]);
 
                 uint32_t size = (uint32_t) get_seg_size(memory, 0);
-
-
-                // fprintf(stderr, "counter: %u size: %i\n", counter, size);                   
-                assert(counter < size);
+              
+                assert(counter <= size);
                 counter++;
 
                 if (temp->command == HALT) {
@@ -106,6 +104,8 @@ void process_instructions(UM_Memory memory)
                         free(registers);
                         loop = false;
                         return;
+                } else if (temp->command == LV) {
+                        load_value(registers, temp->a, temp->val);
                 }
         
                 call_commands(memory, temp, registers, &counter);
@@ -145,7 +145,6 @@ static inline void call_commands(UM_Memory memory, instruction command,
         uint32_t ra = command->a;
         uint32_t rb = command->b;
         uint32_t rc = command->c;
-        uint32_t val = command->val;
      
         /* switch statement to process instructions */
         switch (opcode) {
@@ -188,8 +187,7 @@ static inline void call_commands(UM_Memory memory, instruction command,
                         load_program(memory, registers, counter, rb, rc);
 		        break;
 		case LV:     
-                        load_value(registers, ra, val);
-                        break;
+                        return;
 		}
 }
 
@@ -228,8 +226,6 @@ static inline instruction unpack_word(uint32_t word)
                 if (command == 13) {
                         a = (word & 234881024) >> 25;
                         int value = word & 33554431;
-
-
 
                         loadVal->a = a;
                         loadVal->val = value;
