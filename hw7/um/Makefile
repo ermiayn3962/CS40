@@ -19,7 +19,7 @@ LDFLAGS = -g -lcii40-O2 -L/comp/40/build/lib -L/usr/sup/cii40/lib64
 # Libraries needed for linking
 # Both programs need cii40 (Hanson binaries) and *may* need -lm (math)
 # Only brightness requires the binary for pnmrdr.
-LDLIBS = -lpnmrdr -lcii40 -lm -lbitpack -l40locality 
+LDLIBS = -lpnmrdr -lcii40 -lm -l40locality 
 
 # Collect all .h files in your directory.
 # This way, you can never forget to add
@@ -28,7 +28,7 @@ INCLUDES = $(shell echo *.h)
 
 ############### Rules ###############
 
-all: um writetests
+all: um 
 
 ## Compile step (.c files -> .o files)
 
@@ -37,7 +37,7 @@ all: um writetests
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-um: um_instructions.o um_runner.o bitpack.o memory.o um.o
+um: um_instructions.o bitpack.o memory.o um.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 writetests: umlabwrite.o umlab.o

@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 FILE *open_file(char *filename);
+void run_um(FILE *um_file);
 
 int main(int argc, char **argv) 
 {
@@ -80,4 +81,35 @@ FILE *open_file(char *filename)
         }
     
         return file;
+}
+
+/********** run_um ********
+ *
+ * Runs the universal emulator
+ *
+ * Parameters:
+ *     FILE *file: the file with the instructions
+ *
+ * Return: 
+ *      Nothing (void)
+ *
+ * Expects
+ *      file to not be NULL
+ *      
+ * Notes:
+ *     May CRE if file is NULL
+ * 
+ ************************/
+void run_um(FILE *um_file)
+{
+    assert(um_file != NULL);
+
+    UM_Memory memory = UM_Memory_New(um_file);
+
+    process_instructions(memory);
+
+    /* clean up memory */
+    clean_up_memory(&memory);
+    fclose(um_file);
+   
 }
