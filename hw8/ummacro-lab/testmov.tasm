@@ -1,0 +1,13 @@
+#--------------------------------------------------------------------
+#                            main
+#--------------------------------------------------------------------
+include mov.tasm
+include writechar.tasm
+
+temp r6
+loadval r1,65
+loadval r2,66
+
+mov r2,r1
+writechar r2
+halt

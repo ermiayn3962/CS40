@@ -1,0 +1,14 @@
+include neg.tasm
+include writechar.tasm
+
+#--------------------------------------------------------------------
+#                            main
+#--------------------------------------------------------------------
+
+temp r7
+loadval r1,1
+neg r2,r1
+loadval r3,66
+add r2,r2,r3
+writechar r2
+halt

@@ -1,0 +1,15 @@
+include writechar.tasm
+include com.tasm
+
+#--------------------------------------------------------------------
+#                            main
+#--------------------------------------------------------------------
+
+temp r3
+loadval r1,0
+nand r1,r1,r1
+com r1,r1
+loadval r2,65
+add r1,r1,r2
+writechar r1
+halt
