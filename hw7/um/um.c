@@ -690,8 +690,9 @@ void process_instructions(UM_Memory memory)
                 counter++;
 
                 if (temp->command == LV) {
-                        load_value(registers, temp->a, temp->val);
-                        
+                        // load_value(registers, temp->a, temp->val);
+                        registers[temp->a] = temp->val;
+
                         // free(temp);
 
                 }
