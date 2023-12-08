@@ -2,20 +2,17 @@
  *
  *                     um.c
  *
- *     Assignment: UM
+ *     Assignment: Profiling
  *     Authors:  Yoda Ermias (yermia01) & Maiah Islam (mislam07)
- *     Date:     11/13/2023
+ *     Date:     12/03/2023
  *
- *     This module is responsible for processing the command line and
- *     kickstarting the program.
+ *     This module emulates a universal machine.
  *
  **************************************************************/
 
-// #include "um_runner.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <bitpack.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +26,20 @@ typedef enum Um_opcode {
         CMOV = 0, SLOAD, SSTORE, ADD, MUL, DIV,
         NAND, HALT, ACTIVATE, INACTIVATE, OUT, IN, LOADP, LV
 } Um_opcode;
+
+const uint32_t COMMAND_MASK = 4026531840;
+const uint32_t LOADVAL_A_MASK = 234881024;
+const uint32_t VALUE_MASK = 33554431;
+const uint32_t NON_LOADVAL_A_MASK = 448;
+const uint32_t B_MASK = 56;
+const uint32_t C_MASK = 7;
+
+
+const uint32_t COMMAND_SHIFT = 28;
+const uint32_t NON_LOADVAL_A_SHIFT = 6;
+const uint32_t LOADVAL_A_SHIFT = 25;
+const uint32_t B_SHIFT = 3;
+const uint32_t INITIAL_CAPACITY = 500;
 
 
 int main(int argc, char **argv) 
@@ -66,13 +77,13 @@ int main(int argc, char **argv)
 
          assert(umfile != NULL);
 
-        uint32_t **segments = calloc(500, sizeof(uint32_t *));
+        uint32_t **segments = calloc(INITIAL_CAPACITY, sizeof(*segments));
         int size = 0;
-        int capacity = 500;
-        int *segment_sizes = calloc(500, sizeof(int));
-        int *ID = calloc(500, sizeof(int));
+        int capacity = INITIAL_CAPACITY;
+        int *segment_sizes = calloc(INITIAL_CAPACITY, sizeof(*segment_sizes));
+        int *ID = calloc(INITIAL_CAPACITY, sizeof(*ID));
         int ID_size = 0;
-        int ID_capacity = 500;
+        int ID_capacity = INITIAL_CAPACITY;
         int zero_size = 0;
         
         fseek(umfile, 0, SEEK_END);
@@ -81,7 +92,7 @@ int main(int argc, char **argv)
         fseek(umfile, 0, SEEK_SET);
 
         zero_size = (int) fileSize / 4;
-        uint32_t *zero_segment = calloc(zero_size, sizeof(uint32_t));
+        uint32_t *zero_segment = calloc(zero_size, sizeof(*zero_segment));
         for (int i = 0; i < zero_size; i++) {
                 uint32_t word = 0;
                 int start = (4 * 8) - 8;
@@ -101,7 +112,7 @@ int main(int argc, char **argv)
         segments[0] = zero_segment;
         segment_sizes[0] = zero_size;
 
-        uint32_t *registers = calloc(8, sizeof(uint32_t));
+        uint32_t *registers = calloc(8, sizeof(*registers));
         
         uint32_t counter = 0;
         bool loop = true;
@@ -115,25 +126,26 @@ int main(int argc, char **argv)
         while (loop) {
                  uint32_t *zero_segment = segments[0];
                 /* grab next instruction to be executed */
-                command = (zero_segment[counter] & 4026531840) >> 28;
+                command = (zero_segment[counter] & COMMAND_MASK) >> COMMAND_SHIFT;
 	
-        if (command > 13) {
+        if (command > LV) {
                 exit(EXIT_FAILURE);
         } else {
                 command = command;
 
-                if (command == 13) {
-                        a = (zero_segment[counter] & 234881024) >> 25;
-                        val = zero_segment[counter] & 33554431;
+                if (command == LV) {
+                        a = (zero_segment[counter] & LOADVAL_A_MASK) >> LOADVAL_A_SHIFT;
+                        val = zero_segment[counter] & VALUE_MASK;
+                        
                         /* b and c are not used with LoadVal instruction */
                         b = 0;
                         c = 0;
 
                 } else {
                         /* sets values for the three-register commands */
-                        a = (zero_segment[counter] & 448) >> 6;
-                        b = (zero_segment[counter] & 56) >> 3;
-                        c = zero_segment[counter] & 7;
+                        a = (zero_segment[counter] & NON_LOADVAL_A_MASK) >> NON_LOADVAL_A_SHIFT;
+                        b = (zero_segment[counter] & B_MASK) >> B_SHIFT;
+                        c = zero_segment[counter] & C_MASK;
                         command = command;
                 }
         }       
@@ -190,13 +202,13 @@ int main(int argc, char **argv)
                         case HALT:
                                 break;
                         case ACTIVATE:    
-                                new_seg = calloc(registers[rc], sizeof(uint32_t));
+                                new_seg = calloc(registers[rc], sizeof(*new_seg));
                                 if (ID_size == 0) {
                                         /* Just add a new segment to sequence directly */
                                         if (size == capacity) {
                                                 capacity = capacity * 2 + 2;
 
-                                                uint32_t **new_arr = calloc(capacity, sizeof(uint32_t *));
+                                                uint32_t **new_arr = calloc(capacity, sizeof(*new_arr));
 
                                                 for (int i = 0; i < size; i++) {
                                                         new_arr[i] = segments[i];
@@ -208,7 +220,7 @@ int main(int argc, char **argv)
 
                                                 segments = new_arr;
 
-                                                int *new_seg_size = calloc(capacity, sizeof(int));
+                                                int *new_seg_size = calloc(capacity, sizeof(*new_seg_size));
                                                 
                                                 for (int i = 0; i < size; i++) {
                                                         new_seg_size[i] = segment_sizes[i];
@@ -255,7 +267,7 @@ int main(int argc, char **argv)
                                 if (ID_size == ID_capacity) {
                                         ID_capacity = ID_capacity * 2 + 2;
 
-                                        int *new_arr = calloc(ID_capacity, sizeof(int));
+                                        int *new_arr = calloc(ID_capacity, sizeof(*new_arr));
 
                                         for (int i = 0; i < ID_size; i++) {
                                                         new_arr[i] = ID[i];
@@ -291,7 +303,7 @@ int main(int argc, char **argv)
                                 if (registers[rb] != 0) {
                                         int length = segment_sizes[registers[rb]];
 
-                                        uint32_t *new_seg = calloc(length, sizeof(uint32_t));
+                                        uint32_t *new_seg = calloc(length, sizeof(*new_seg));
 
                                         /* make a deep copy of the desired segment */
                                         uint32_t *target = segments[registers[rb]];
