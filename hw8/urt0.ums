@@ -1,0 +1,15 @@
+# File urt0.ums contains startup code to allocate space for the call stack (in the data section) and
+# initialize both the stack pointer and register 0 (in the init section)
+
+
+.section init 
+    .zero r0
+    .temps r6, r7
+
+.section data
+    .space 10000
+    endstack:
+
+.section init 
+    r0 := 0
+    r2 := endstack

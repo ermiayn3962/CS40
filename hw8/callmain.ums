@@ -1,0 +1,10 @@
+# File callmain.ums makes the initial call to main, then halts (all in the init section). Not counting
+# blank lines or comments, the implementation of this module is only 5 lines of assembly code.
+
+
+.section init
+    .zero r0
+    .temps r6, r7
+    goto main linking r1
+    kill:
+        halt

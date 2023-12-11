@@ -1,0 +1,224 @@
+# File calc40.ums contains calculator-related data structures and functions.
+
+########################################################
+#                     Conventions                      #
+#     * r0 - always set to zero                        #
+#     * r1 - always holds return address               #
+#     * r2 - call stack pointer                        #
+#     * r3 - value stack pointer                       #
+#     * r4 - program state flag                        #
+#     * r5 - volatile register (return from functions) #
+#     * r6 - volatile register                         #
+#     * r7 - volatile register                         #
+########################################################
+
+
+########################################################
+#              Initializing Data Structures             #
+########################################################
+
+.section init 
+    .temps r6, r7
+
+    # Allocating space for valuestack #
+    .space 10000
+        valuestack:
+
+    r3 := valuestack # ASK ABOUT THIS
+
+
+    # Allocating space for jumptable #
+    jumptable:
+        .space 256  # Handles all possible ASCII input characters
+
+    # Initializing jumptable #
+    init_jumptable:
+        push r3 on stack r2
+        push r4 on stack r2
+
+        r3 := jumptable
+        r4 := jumptable + 256
+
+        goto set_input_error
+
+
+    set_input_error:
+        m[r0][r3] := input_error
+        r3 := r3 + 1 
+        if (r3 <s r4) goto set_input_error using r5 # Looping through all cases
+
+        pop r4 off stack r2
+        pop r3 off stack r2
+
+    set_digits:
+        m[r0][jumptable + '0'] := dig
+        m[r0][jumptable + '1'] := dig
+        m[r0][jumptable + '2'] := dig
+        m[r0][jumptable + '3'] := dig
+        m[r0][jumptable + '4'] := dig
+        m[r0][jumptable + '5'] := dig
+        m[r0][jumptable + '6'] := dig
+        m[r0][jumptable + '7'] := dig
+        m[r0][jumptable + '8'] := dig
+        m[r0][jumptable + '9'] := dig
+    set_newline:
+        m[r0][jumptable + '\n'] := print
+    set_space:
+        m[r0][jumptable + ' '] := space
+.section text
+    space:
+        r4 := 0
+        goto waiting
+    dig:
+        pop r4 off stack r2     # flag for entering/waiting
+        # was in entering 
+        if (r4 == 1) goto process_multi_dig using r5
+
+        output "in digit"
+        r1 := r1 - '0'
+        push r1 on stack r3
+
+        goto entering
+
+    process_multi_dig:
+    
+        
+        r1 := r1 - '0'
+
+        #from waiting state
+        pop r4 off stack r3
+        r4 := r4 * 10
+        r4 := r4 + r1
+
+        push r4 on stack r3
+
+        goto entering
+
+
+      
+
+
+    
+# Outputs an error for unsupported commands
+.section text
+    input_error:
+        r4 := 0     # sets the program state back to waiting
+        push r1 on stack r2
+        output "Unknown character\n" #NEEDS TO PRINT INPUT FROM USER... REQUIRES VALUE STACK TO DO
+
+        pop r5 off stack r2
+        goto r5
+        
+
+
+.section text
+    main: 
+        push r1 on stack r2
+        output "inside main\n"
+        goto waiting linking r1
+
+
+        pop r5 off stack r2
+        goto r5
+
+
+
+########################################################
+#                   Main Calculator Loop               #
+########################################################
+    waiting:
+        output "\ninside waiting\n"
+        push r1 on stack r2     # save r1 which is return address for main
+        push r4 on stack r2     # saving non-volatile register
+                
+        r1 := input()           # get first input of program
+        r4 := 0
+        goto waiting_with_characters
+
+    # r4 is the flag
+    entering:
+        output "Entering\n"
+        r4 := 1
+
+        r1 := input()
+
+        goto waiting_with_characters
+
+
+    waiting_with_characters:
+        output "\ninside waiting w/ characters\n"
+
+        push r4 on stack r2     # pushing flag for program state
+
+
+        if (r1 == -1) goto kill_program using r5
+        
+        # r4 is the flag for program state, must be set to 0 at every non-digit command
+        r5 := jumptable + r1
+        r4 := m[r0][r5]
+
+
+        goto r4 
+
+    .section init 
+        m[r0][jumptable + '+'] := add
+
+    .section text
+        add: 
+
+
+
+
+    kill_program:
+        
+        output "\nkilling program \n"
+        pop r5 off stack r3
+        output r5 + '0'
+        halt
+
+
+
+
+
+    #init_table:
+
+        #r5 := 0
+
+#        m[r0][jumptable + '/'] := div
+ #       m[r0][jumptable + '\n'] := print
+ #       m[r0][jumptable + '*'] := mult
+#        m[r0][jumptable + '-'] := sub
+#        m[r0][jumptable + '~'] := com
+#        m[r0][jumptable + '|'] := or
+ #       m[r0][jumptable + '&'] := and
+  #      m[r0][jumptable + 'c'] := change
+   #     m[r0][jumptable + 's'] := swap
+    #    m[r0][jumptable + 'd'] := dupe
+     #   m[r0][jumptable + 'p'] := pops
+      #  m[r0][jumptable + 'z'] := zero
+
+
+
+
+
+
+
+# .section rodata
+#     div:
+#         pop r6 off stack r3
+#         pop r7 off stack r3
+#         r6 := r6 / r7
+#         push r6 on stack r3
+#         goto r5
+#     print:
+#     mult:
+#     add:
+#     sub:
+#     com:
+#     or:
+#     and:
+#     change:
+#     swap:
+#     dupe:
+#     pops:
+#     zero:
