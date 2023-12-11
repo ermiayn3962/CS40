@@ -74,9 +74,11 @@
         # was in entering 
         if (r4 == 1) goto process_multi_dig using r5
 
-        output "in digit"
+        output "in digit\n"
         r1 := r1 - '0'
+        output "after subtracting ASCII 0\n"
         push r1 on stack r3
+        output "after pushing onto value stack\n"
 
         goto entering
 
@@ -114,7 +116,6 @@
 .section text
     main: 
         push r1 on stack r2
-        output "inside main\n"
         goto waiting linking r1
 
 
@@ -146,7 +147,7 @@
 
 
     waiting_with_characters:
-        output "\ninside waiting w/ characters\n"
+        # output "\ninside waiting w/ characters\n"
 
         push r4 on stack r2     # pushing flag for program state
 
