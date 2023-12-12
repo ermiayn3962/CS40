@@ -11,26 +11,31 @@
 
         pop r3 off stack r2 # restoring value stack
         goto waiting
+    
+    print_minus_sign:
+        output '-'
+        r4 := r4 * -1
+        goto pos
 
     print_recur:
         if (r3 == valuestack) goto r1 using r5
 
         pop r4 off stack r3
         output ">>> "
+        if (r4 <s 0) goto print_minus_sign using r5
+        pos:
+            push r1 on stack r2
         
-       
-    
-        push r1 on stack r2
-        r5 := '!'       #recursive flag
-        push r5 on stack r2
-        #changes r1
-        goto print_value linking r1
+            r5 := '!'       #recursive flag
+            push r5 on stack r2
+            #changes r1
+            goto print_value linking r1
+            
+            pop r1 off stack r2
         
-        pop r1 off stack r2
-    
-        output "\n"
+            output "\n"
 
-        goto print_recur
+            goto print_recur
 
     print_value:
     

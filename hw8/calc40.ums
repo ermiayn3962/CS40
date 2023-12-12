@@ -14,7 +14,7 @@
 
 
 ########################################################
-#              Initializing Data Structures             #
+#              Initializing Data Structures            #
 ########################################################
 
 .section init 
@@ -64,11 +64,8 @@
     set_newline:
         m[r0][jumptable + '\n'] := print
     set_space:
-        m[r0][jumptable + ' '] := space
+        m[r0][jumptable + ' '] := waiting
 .section text
-    space:
-        r4 := 0
-        goto waiting
     dig:
         pop r4 off stack r2     # flag for entering/waiting
         # was in entering 
@@ -161,24 +158,58 @@
 
         goto r4 
 
+
+########################################################
+#                    Functions                         #
+########################################################
+
+## ADD
     .section init 
         m[r0][jumptable + '+'] := add
 
     .section text
         add: 
+            push r4 on stack r2
+            push r5 on stack r2
+            push r1 on stack r2
+
+            r1 := r3 - valuestack
+            if (r1 <s 2) goto stack_underflow using r5
+            
+            pop r4 off stack r3
+            pop r5 off stack r3
+            
+            r4 := r5 + r4
+
+            push r4 on stack r3
+            
+            pop r1 off stack r2
+            pop r5 off stack r2
+            pop r4 off stack r2
+            goto waiting
+## Mult
+
+    .section te
+
+########################################################
+#                Err Functions                         #
+########################################################
 
 
+    stack_underflow:
+        output "Stack underflow---expected at least 2 elements"
 
-
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
     kill_program:
         
         output "\nkilling program \n"
-        pop r5 off stack r3
-        output r5 + '0'
         halt
 
 
-
+    
 
 
     #init_table:
