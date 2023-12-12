@@ -24,7 +24,7 @@
     .space 10000
         valuestack:
 
-    r3 := valuestack # ASK ABOUT THIS
+    r3 := valuestack 
 
 
     # Allocating space for jumptable #
@@ -70,12 +70,8 @@
         pop r4 off stack r2     # flag for entering/waiting
         # was in entering 
         if (r4 == 1) goto process_multi_dig using r5
-
-        output "in digit\n"
         r1 := r1 - '0'
-        output "after subtracting ASCII 0\n"
         push r1 on stack r3
-        output "after pushing onto value stack\n"
 
         goto entering
 
@@ -101,12 +97,11 @@
 # Outputs an error for unsupported commands
 .section text
     input_error:
-        r4 := 0     # sets the program state back to waiting
-        push r1 on stack r2
-        output "Unknown character\n" #NEEDS TO PRINT INPUT FROM USER... REQUIRES VALUE STACK TO DO
 
-        pop r5 off stack r2
-        goto r5
+        output "Unknown character '" 
+        output r1
+        output "'\n"
+        goto waiting
         
 
 
@@ -125,7 +120,6 @@
 #                   Main Calculator Loop               #
 ########################################################
     waiting:
-        output "\ninside waiting\n"
         push r1 on stack r2     # save r1 which is return address for main
         push r4 on stack r2     # saving non-volatile register
                 
@@ -135,7 +129,6 @@
 
     # r4 is the flag
     entering:
-        output "Entering\n"
         r4 := 1
 
         r1 := input()
@@ -144,7 +137,6 @@
 
 
     waiting_with_characters:
-        # output "\ninside waiting w/ characters\n"
 
         push r4 on stack r2     # pushing flag for program state
 
@@ -164,93 +156,343 @@
 ########################################################
 
 ## ADD
-    .section init 
-        m[r0][jumptable + '+'] := add
+.section init 
+    m[r0][jumptable + '+'] := add
 
-    .section text
-        add: 
-            push r4 on stack r2
-            push r5 on stack r2
-            push r1 on stack r2
+.section text
+    add: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
 
-            r1 := r3 - valuestack
-            if (r1 <s 2) goto stack_underflow using r5
-            
-            pop r4 off stack r3
-            pop r5 off stack r3
-            
-            r4 := r5 + r4
+        r1 := valuestack - r3
 
+        if (r1 <s 2) goto stack_underflow2 using r5
+        
+        pop r4 off stack r3
+        pop r5 off stack r3
+        
+        r4 := r5 + r4
+
+        push r4 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+
+## Mult
+.section init
+    m[r0][jumptable + '*'] := mult
+
+.section text
+    mult: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 2) goto stack_underflow2 using r5
+        
+        pop r4 off stack r3
+        pop r5 off stack r3
+        
+        r4 := r5 * r4
+
+        push r4 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+
+
+
+## Sub
+.section init
+    m[r0][jumptable + '-'] := sub
+
+.section text
+    sub: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 2) goto stack_underflow2 using r5
+        
+        pop r4 off stack r3
+        pop r5 off stack r3
+        
+        r4 := r5 - r4
+
+        push r4 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+## Div Still need to do signed division
+.section init
+    m[r0][jumptable + '/'] := div
+
+.section text
+    div: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 2) goto stack_underflow2 using r5
+        pop r4 off stack r3
+        if (r4 == 0) goto divide_zero using r5
+        
+        pop r5 off stack r3
+        
+        if (r5 <s 0) goto first_neg using r1
+        if (r4 <s 0) goto second_neg using r1
+        regular_div:
+            r4 := r5 / r4
+            goto end_div
+        first_neg:
+            if (r4 <s 0) goto both_neg using r1
+            r5 := r5 * -1
+            r4 := r5 / r4
+            r4 := r4 * -1
+            goto end_div
+        
+        second_neg:
+            if (r5 <s 0) goto both_neg using r1
+            r4 := r4 * -1
+            r4 := r5 / r4
+            r4 := r4 * -1
+            goto end_div
+        both_neg:
+            r4 := r4 * -1
+            r5 := r5 * -1
+            r4 := r5 / r4
+
+        end_div:
             push r4 on stack r3
-            
             pop r1 off stack r2
             pop r5 off stack r2
             pop r4 off stack r2
             goto waiting
-## Mult
+## OR
+.section init
+    m[r0][jumptable + '|'] := or
+.section text
+    or: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
 
-    .section te
+        r1 := valuestack - r3
 
-########################################################
-#                Err Functions                         #
-########################################################
+        if (r1 <s 2) goto stack_underflow2 using r5
+        
+        pop r4 off stack r3
+        pop r5 off stack r3
+        
+        r4 := r5 | r4
 
+        push r4 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
 
-    stack_underflow:
-        output "Stack underflow---expected at least 2 elements"
+##AND
+.section init
+    m[r0][jumptable + '&'] := and
+.section text
+    and: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 2) goto stack_underflow2 using r5
+        
+        pop r4 off stack r3
+        pop r5 off stack r3
+        
+        r4 := r5 & r4
+
+        push r4 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+## change
+.section init
+    m[r0][jumptable + 'c'] := change
+.section text
+    change: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 1) goto stack_underflow1 using r5
+        
+        pop r4 off stack r3
+        r4 := r4 * -1
+
+        push r4 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+
+## comp
+.section init
+    m[r0][jumptable + '~'] := comp
+.section text
+    comp: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 1) goto stack_underflow1 using r5
+        
+        pop r4 off stack r3
+        r4 := ~r4
+
+        push r4 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+# swap
+.section init
+    m[r0][jumptable + 's'] := swap
+.section text
+    swap: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 2) goto stack_underflow2 using r5
+        
+        pop r4 off stack r3
+        pop r5 off stack r3
+        push r4 on stack r3
+        push r5 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+
+# DUPE
+.section init
+    m[r0][jumptable + 'd'] := DUPE
+.section text
+    DUPE: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 1) goto stack_underflow1 using r5
+        
+        pop r4 off stack r3
+        r5 := r4
+        
+        
+        push r4 on stack r3
+        push r5 on stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+
+# Discard
+.section init
+    m[r0][jumptable + 'p'] := discard
+.section text
+    discard: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        r1 := valuestack - r3
+
+        if (r1 <s 1) goto stack_underflow1 using r5
+        
+        pop r4 off stack r3
+        
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+
+# Zap
+.section init
+    m[r0][jumptable + 'z'] := zap  #hehehe
+.section text
+    zap: 
+        push r4 on stack r2
+        push r5 on stack r2
+        push r1 on stack r2
+
+        goto zapstack linking r1  
 
         pop r1 off stack r2
         pop r5 off stack r2
         pop r4 off stack r2
         goto waiting
-    kill_program:
-        
-        output "\nkilling program \n"
-        halt
+
+    zapstack:
+        if (r3 == valuestack) goto r1 using r5
+        pop r4 off stack r3
+        goto zapstack
 
 
+
+########################################################
+#                Err Functions                         #
+########################################################
     
 
+    stack_underflow2:
+        output "Stack underflow---expected at least 2 elements\n"
 
-    #init_table:
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+    stack_underflow1:
+        output "Stack underflow---expected at least 1 element\n"
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
 
-        #r5 := 0
+    divide_zero:
+        output "Division by zero\n"
+        push r4 on stack r3
 
-#        m[r0][jumptable + '/'] := div
- #       m[r0][jumptable + '\n'] := print
- #       m[r0][jumptable + '*'] := mult
-#        m[r0][jumptable + '-'] := sub
-#        m[r0][jumptable + '~'] := com
-#        m[r0][jumptable + '|'] := or
- #       m[r0][jumptable + '&'] := and
-  #      m[r0][jumptable + 'c'] := change
-   #     m[r0][jumptable + 's'] := swap
-    #    m[r0][jumptable + 'd'] := dupe
-     #   m[r0][jumptable + 'p'] := pops
-      #  m[r0][jumptable + 'z'] := zero
-
-
-
-
-
-
-
-# .section rodata
-#     div:
-#         pop r6 off stack r3
-#         pop r7 off stack r3
-#         r6 := r6 / r7
-#         push r6 on stack r3
-#         goto r5
-#     print:
-#     mult:
-#     add:
-#     sub:
-#     com:
-#     or:
-#     and:
-#     change:
-#     swap:
-#     dupe:
-#     pops:
-#     zero:
+        pop r1 off stack r2
+        pop r5 off stack r2
+        pop r4 off stack r2
+        goto waiting
+    
+    kill_program:
+        halt

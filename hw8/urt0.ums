@@ -6,8 +6,9 @@
     .zero r0
     .temps r6, r7
 
+# call stack is huuuugeeee
 .section data
-    .space 10000
+    .space 10000000
     endstack:
 
 .section init 
