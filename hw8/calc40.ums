@@ -1,4 +1,16 @@
-# File calc40.ums contains calculator-related data structures and functions.
+#|---------------------------------------------------------------------------|#
+#                              UMASM (RPN Calc)                               #
+#             ----------------------------------------------------            #
+#                                                                             #
+#  Authors:       Yoda Ermias (yermia01) & Cooper Golemme (cgolem01)          #
+#                                                                             #
+#  Date:          Dec 10, 2023                                                #
+#                                                                             #
+#  Description:   File calc40.ums contains Calculator                         #
+#                 related data structures and functions.                      #
+#                                                                             #
+#|---------------------------------------------------------------------------|#
+
 
 ########################################################
 #                     Conventions                      #
@@ -13,43 +25,67 @@
 ########################################################
 
 
-########################################################
-#              Initializing Data Structures            #
-########################################################
+#|---------------------------------------------------------------------------|#
+#|                      Initializing Data Structures                         |#
+#|---------------------------------------------------------------------------|#
 
 .section init 
     .temps r6, r7
 
+########################################################
+#             Allocating Data Structure Space         
+#   Purpose:
+#       - Allocating space for value stack and the 
+#         jumptable
+#
+#   Register Usage:
+#       - r3 holds the pointer to the value stack
+#
+########################################################
     # Allocating space for valuestack #
     .space 10000
         valuestack:
 
-    r3 := valuestack 
+    r3 := valuestack    # initialized r3 to the value stack pointer
 
 
     # Allocating space for jumptable #
     jumptable:
         .space 256  # Handles all possible ASCII input characters
 
-    # Initializing jumptable #
+########################################################
+#                   Jumptable Set Up         
+#   Purpose:
+#       - sets up the jumptable to handle digit, space,
+#         and newline inputs primarily with a "for" loop
+#
+#   Register Usage:
+#       - r0 holds a zero input (used to represent the zero
+#         segment in memory)
+#       - r3 holds the current position in the jumptable 
+#         (allows for iteratation through the table)
+#       - r4 is used to hold a pointer to the bottom of the
+#         jumptable (used as a condition check)
+#
+########################################################
     init_jumptable:
-        push r3 on stack r2
+        push r3 on stack r2     # storing the value stack
         push r4 on stack r2
 
-        r3 := jumptable
-        r4 := jumptable + 256
+        r3 := jumptable         # start of jumptable in memory
+        r4 := jumptable + 256   # end of jumptable in memory
 
         goto set_input_error
-
-
+        
     set_input_error:
         m[r0][r3] := input_error
         r3 := r3 + 1 
         if (r3 <s r4) goto set_input_error using r5 # Looping through all cases
 
         pop r4 off stack r2
-        pop r3 off stack r2
-
+        pop r3 off stack r2     # restoring the value stack
+        
+    # Setting procedures for various acceptable ASCII inputs
     set_digits:
         m[r0][jumptable + '0'] := dig
         m[r0][jumptable + '1'] := dig
@@ -65,434 +101,788 @@
         m[r0][jumptable + '\n'] := print
     set_space:
         m[r0][jumptable + ' '] := waiting
-.section text
+
+########################################################
+#                       dig           
+#   Purpose:
+#       - checks what state the program is currently in
+#         and routes the flow of the program to the 
+#         appropriate procedure
+#
+#   Register Usage:
+#       - r4 holds the program's current state
+#       - r1 holds the converted decimal digit
+#       - r3 holds the pointer to the top of the value
+#         stack
+#
+########################################################
+.section text    
     dig:
         pop r4 off stack r2     # flag for entering/waiting
-        # was in entering 
+
+        # jumps if program state is "entering" 
         if (r4 == 1) goto process_multi_dig using r5
-        r1 := r1 - '0'
-        push r1 on stack r3
-
-        goto entering
-
-    process_multi_dig:
-    
         
-        r1 := r1 - '0'
+        r1 := r1 - '0'          # r1 gets decimal value of input
+        push r1 on stack r3     # push decimal on value stack (r3)
 
-        #from waiting state
-        pop r4 off stack r3
-        r4 := r4 * 10
-        r4 := r4 + r1
+        goto entering           # goto entering state
 
-        push r4 on stack r3
+########################################################
+#                 process_multi_dig           
+#   Purpose:
+#       - converts a multi-digit ASCII input into a decimal
+#         digit and pushes the value onto the value stack
+#         in r3
+#
+#   Register Usage:
+#       - r1 holds a converted decimal digit
+#       - r4 is used to hold the intermediary multi-digit
+#         numbers
+#       - r3 holds the current pointer to the top of the 
+#         value stack
+#
+########################################################
+.section text    
+    process_multi_dig:
+        # r1 is input from waiting or entering state
+        r1 := r1 - '0'  # converts ASCII digit to decimal
 
-        goto entering
+        pop r4 off stack r3 # sets r4 to value at top of stack r3
+        r4 := r4 * 10       # moves r4 digit(s) over to the next 10s place
+        r4 := r4 + r1       # adds to the ones place the decimal input
+
+        push r4 on stack r3 # push updated value onto value stack
+
+        goto entering       # goes back to entering state
 
 
-      
-
-
-    
-# Outputs an error for unsupported commands
+########################################################
+#                     input_error           
+#   Purpose:
+#       - outputs an error message for an unsupported 
+#         command input
+#
+#   Register Usage:
+#       - r1 holds the input provided by the user
+#
+########################################################
 .section text
     input_error:
-
         output "Unknown character '" 
         output r1
         output "'\n"
         goto waiting
-        
 
-
+########################################################
+#                       main           
+#   Purpose:
+#       - starts the main loop of the program in the 
+#         waiting state
+#
+#   Register Usage:
+#       - No major uses of registers outside of their 
+#         conventional uses listed
+#
+########################################################
 .section text
     main: 
         push r1 on stack r2
+        
         goto waiting linking r1
-
 
         pop r5 off stack r2
         goto r5
 
-
+#|----------------------------------------------------------------------------|#
+#|                           Main Calculator Loop                             |#
+#|----------------------------------------------------------------------------|#
 
 ########################################################
-#                   Main Calculator Loop               #
+#                       waiting           
+#   Purpose:
+#       - Sets the program state to waiting mode and
+#         receives the data from standard input in r1
+#
+#   Register Usage:
+#       - r1 holds the input from the user
+#       - r4 holds the program state flag
+#
 ########################################################
+.section text
     waiting:
         push r1 on stack r2     # save r1 which is return address for main
         push r4 on stack r2     # saving non-volatile register
                 
         r1 := input()           # get first input of program
-        r4 := 0
+        r4 := 0                 # set state flag to "waiting"
         goto waiting_with_characters
 
-    # r4 is the flag
+
+########################################################
+#                       entering           
+#   Purpose:
+#       - Sets the program state to entering mode and
+#         receives the next character from standard input
+#         in r1
+#
+#   Register Usage:
+#       - r1 holds the input from the user
+#       - r4 holds the program state flag
+#
+########################################################
+.section text
     entering:
-        r4 := 1
+        r4 := 1                 # set state flag to "entering"
+        r1 := input()           # r1 gets next input
 
-        r1 := input()
+        goto waiting_with_characters   # process that input in r
 
-        goto waiting_with_characters
-
-
+########################################################
+#              waiting_with_characters           
+#   Purpose:
+#       - Processes the input receieved in r1 and jumps
+#         to the designated spot in the jumptable
+#
+#   Register Usage:
+#       - r1 holds the input from the user
+#       - r4 will hold the command location in memory 
+#         to jump to
+#       - r5 will hold the address of the command from 
+#         the jumptable
+#
+########################################################
+.section text
     waiting_with_characters:
 
-        push r4 on stack r2     # pushing flag for program state
+        push r4 on stack r2     # pushing flag for program state on callstack
 
 
-        if (r1 == -1) goto kill_program using r5
+        if (r1 == -1) goto kill_program using r5    # EOF kills program
         
-        # r4 is the flag for program state, must be set to 0 at every non-digit command
-        r5 := jumptable + r1
-        r4 := m[r0][r5]
+        r5 := jumptable + r1  # sets r5 to jumptable value based on input
+        r4 := m[r0][r5]       # sets r4 to the procedure at that jumptable value
 
+        goto r4               # goes to that procedure (add, sub, mult, ...)
 
-        goto r4 
-
+#|----------------------------------------------------------------------------|#
+#|                          Operation Functions                               |#
+#|----------------------------------------------------------------------------|#
 
 ########################################################
-#                    Functions                         #
+#                        add          
+#   Purpose:
+#       - Adds the top two elements of the value stack
+#         together and pushes the result back onto it
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the second element from the value stack
+#
 ########################################################
-
-## ADD
 .section init 
     m[r0][jumptable + '+'] := add
 
 .section text
     add: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2         # save non-volitile register
+        push r5 on stack r2         # save non-volitile register
+        push r1 on stack r2         # save value of r1
 
-        r1 := valuestack - r3
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
+        r1 := valuestack - r3      
 
+        # if number of values in value stack (r1) is less than 2
         if (r1 <s 2) goto stack_underflow2 using r5
         
-        pop r4 off stack r3
-        pop r5 off stack r3
+        # pop two elements of value stack(r3) store them in r4, r5
+        pop r4 off stack r3          # top element
+        pop r5 off stack r3          # 2nd to top element
         
-        r4 := r5 + r4
+        r4 := r5 + r4                # add top 2 elements of stack
 
-        push r4 on stack r3
+        push r4 on stack r3          # push result onto value stack (r3)
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
-        goto waiting
+        pop r1 off stack r2          # restore value of r1 pushed on call stack
+        pop r5 off stack r2          # restore value of r5 pushed on call stack
+        pop r4 off stack r2          # restore value of r4 pushed on call stack
+        
+        goto waiting               # after adding go to waiting state of program
 
-## Mult
+########################################################
+#                        mult          
+#   Purpose:
+#       - Multiplys the top two elements of the value 
+#         stack together and pushes the result back onto it
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the second element from the value stack
+#
+########################################################
 .section init
     m[r0][jumptable + '*'] := mult
 
 .section text
     mult: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
-
+        push r4 on stack r2         # save non-volitile register
+        push r5 on stack r2         # save non-volitile register
+        push r1 on stack r2         # save return value
+        
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 2
         if (r1 <s 2) goto stack_underflow2 using r5
         
-        pop r4 off stack r3
-        pop r5 off stack r3
+        # pop two elements of value stack(r3) store them in r4, r5
+        pop r4 off stack r3         # top element
+        pop r5 off stack r3         # 2nd to top element
         
-        r4 := r5 * r4
+        r4 := r5 * r4               # multiply the two
 
-        push r4 on stack r3
+        push r4 on stack r3         # push result onto value stack
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2         # restore value of r1 pushed on call stack
+        pop r5 off stack r2         # restore value of r5 pushed on call stack
+        pop r4 off stack r2         # restore value of r4 pushed on call stack
         goto waiting
 
-
-
-## Sub
+########################################################
+#                        sub          
+#   Purpose:
+#       - Subtracts the second elements on the value stack
+#         from the top element on the stack then
+#         pushes the result back onto the value stack
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the second element from the value stack
+#
+########################################################
 .section init
     m[r0][jumptable + '-'] := sub
 
 .section text
     sub: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2             # save non-volitile register
+        push r5 on stack r2             # save non-volitile register
+        push r1 on stack r2             # save return value
 
-        r1 := valuestack - r3
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
+        r1 := valuestack - r3          
 
+        # if number of values in value stack (r1) is less than 2
         if (r1 <s 2) goto stack_underflow2 using r5
         
-        pop r4 off stack r3
-        pop r5 off stack r3
+        pop r4 off stack r3             # top element
+        pop r5 off stack r3             # 2nd to top element
         
-        r4 := r5 - r4
+        r4 := r5 - r4                   # subtract (2nd to top) - (top)
 
-        push r4 on stack r3
+        push r4 on stack r3             # push result of subraction
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2           # restore value of r1 pushed on call stack
+        pop r5 off stack r2           # restore value of r5 pushed on call stack
+        pop r4 off stack r2           # restore value of r4 pushed on call stack
+
         goto waiting
-## Div Still need to do signed division
+        
+########################################################
+#                        div          
+#   Purpose:
+#       - Divides the top two elements on the value stack
+#         then pushes the result back onto the value stack
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the second element from the value stack
+#
+########################################################
 .section init
     m[r0][jumptable + '/'] := div
 
 .section text
     div: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2                 # save non-volitile register
+        push r5 on stack r2                 # save non-volitile register
+        push r1 on stack r2                 # save return value
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 2
         if (r1 <s 2) goto stack_underflow2 using r5
-        pop r4 off stack r3
-        if (r4 == 0) goto divide_zero using r5
+
+        pop r4 off stack r3                  # top element of value stack (r3)
+        if (r4 == 0) goto divide_zero using r5      # top of stack is 0, jump
         
-        pop r5 off stack r3
+        pop r5 off stack r3                  # 2nd to top element
         
-        if (r5 <s 0) goto first_neg using r1
-        if (r4 <s 0) goto second_neg using r1
+        # in case of negative division
+        if (r5 <s 0) goto first_neg using r1    # if 2nd to top is negative
+        if (r4 <s 0) goto second_neg using r1   # if top is negative
+        
+        # regular positive division
         regular_div:
-            r4 := r5 / r4
-            goto end_div
+            r4 := r5 / r4       # (2nd to top) / (top)
+            goto end_div        # go to tag at end of div
         first_neg:
-            if (r4 <s 0) goto both_neg using r1
-            r5 := r5 * -1
-            r4 := r5 / r4
-            r4 := r4 * -1
-            goto end_div
-        
+            if (r4 <s 0) goto both_neg using r1 # case where both neg
+            r5 := r5 * -1       # make r5 positive
+            r4 := r5 / r4       # (2nd to top) / (top)
+            r4 := r4 * -1       # make result negative
+            goto end_div        # go to tag at end of div
         second_neg:
-            if (r5 <s 0) goto both_neg using r1
-            r4 := r4 * -1
-            r4 := r5 / r4
-            r4 := r4 * -1
-            goto end_div
+            if (r5 <s 0) goto both_neg using r1 # case where both neg
+            r4 := r4 * -1       # make r4 positive
+            r4 := r5 / r4       # (2nd to top) / (top)
+            r4 := r4 * -1       # make result negative
+            goto end_div        # go to tag at end of div
         both_neg:
-            r4 := r4 * -1
-            r5 := r5 * -1
-            r4 := r5 / r4
+            r4 := r4 * -1       # make r4 positive   
+            r5 := r5 * -1       # make r5 positive
+            r4 := r5 / r4       # (2nd to top) / (top) --> result is positive
 
         end_div:
-            push r4 on stack r3
-            pop r1 off stack r2
-            pop r5 off stack r2
-            pop r4 off stack r2
-            goto waiting
-## OR
+            push r4 on stack r3 # push result of division onto value stack
+            
+            pop r1 off stack r2  # restore value of r1 pushed on call stack
+            pop r5 off stack r2  # restore value of r5 pushed on call stack
+            pop r4 off stack r2  # restore value of r4 pushed on call stack
+            goto waiting         # goto waiting state
+
+########################################################
+#                          or          
+#   Purpose:
+#       - Preforms bitwise 'or' operation on the top two 
+#         elements on the value stack then pushes
+#         the result back onto the value stack
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the second element from the value stack
+#
+########################################################
 .section init
     m[r0][jumptable + '|'] := or
 .section text
     or: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 2
         if (r1 <s 2) goto stack_underflow2 using r5
         
-        pop r4 off stack r3
-        pop r5 off stack r3
+        # pop two values from stack and store in r4 and r5
+        pop r4 off stack r3      # top
+        pop r5 off stack r3      # 2nd to top
         
-        r4 := r5 | r4
+        r4 := r5 | r4            # r4 is or of top 2 elems
 
-        push r4 on stack r3
+        push r4 on stack r3      # push result on stack
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2      # restore orig r1 value
+        pop r5 off stack r2      # restore orig r5 value
+        pop r4 off stack r2      # restore orig r4 value
+
         goto waiting
 
-##AND
+########################################################
+#                        and          
+#   Purpose:
+#       - Preforms bitwise 'and' operation on the top two 
+#         elements on the value stack then pushes
+#         the result back onto the value stack
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the second element from the value stack
+#
+########################################################
 .section init
     m[r0][jumptable + '&'] := and
 .section text
     and: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 2
         if (r1 <s 2) goto stack_underflow2 using r5
         
-        pop r4 off stack r3
-        pop r5 off stack r3
+        # pop 2 values off value stack 
+        pop r4 off stack r3     # top value
+        pop r5 off stack r3     # 2nd to top value
         
-        r4 := r5 & r4
+        r4 := r5 & r4           # r4 is the and of these two values
 
-        push r4 on stack r3
+        push r4 on stack r3     # push result on value stack
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2      # restore orig r1 value
+        pop r5 off stack r2      # restore orig r5 value
+        pop r4 off stack r2      # restore orig r4 value
         goto waiting
-## change
+
+########################################################
+#                        change          
+#   Purpose:
+#       - Changes the signedness of the top element on the
+#         value stack then pushes result back onto the 
+#         value stack
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 primarily used as a temporary register
+#
+########################################################
 .section init
     m[r0][jumptable + 'c'] := change
 .section text
     change: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 1
         if (r1 <s 1) goto stack_underflow1 using r5
         
-        pop r4 off stack r3
-        r4 := r4 * -1
-
-        push r4 on stack r3
+        pop r4 off stack r3      # r4 is top element of stack
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        r4 := r4 * -1            # r4 gets the negative of r4
+
+        push r4 on stack r3      # push result onto value stack
+        
+        pop r1 off stack r2      # restore orig r1 value
+        pop r5 off stack r2      # restore orig r5 value
+        pop r4 off stack r2      # restore orig r4 value
+        
         goto waiting
 
-## comp
+########################################################
+#                         comp          
+#   Purpose:
+#       - Preforms bitwise 'complement' operation on the
+#         top element on the value stack then pushes the 
+#         result back on the value stack
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 primarily used as a temporary register
+#
+########################################################
 .section init
     m[r0][jumptable + '~'] := comp
 .section text
     comp: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 1
         if (r1 <s 1) goto stack_underflow1 using r5
         
-        pop r4 off stack r3
-        r4 := ~r4
-
-        push r4 on stack r3
+        pop r4 off stack r3           # pop value off value stack put in r4
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        r4 := ~r4                     # r4 gets set to complement of r4
+
+        push r4 on stack r3           # push result on value stack
+        
+        pop r1 off stack r2           # restore value of r1 pushed on callstack
+        pop r5 off stack r2           # restore value of r2 pushed on callstack
+        pop r4 off stack r2           # restore value of r4 pushed on callstack
+
         goto waiting
-# swap
+
+########################################################
+#                         swap          
+#   Purpose:
+#       - Swaps the position of the top two element on 
+#         the value stack with each other
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the second element from the value stack
+#
+########################################################
 .section init
     m[r0][jumptable + 's'] := swap
 .section text
     swap: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 2
         if (r1 <s 2) goto stack_underflow2 using r5
+
+        # pops 2 values off stack
+        pop r4 off stack r3        # top
+        pop r5 off stack r3        # 2nd to top
+
+        # reverses order, pushes back
+        push r4 on stack r3        # push top
+        push r5 on stack r3        # push 2nd to top
         
-        pop r4 off stack r3
-        pop r5 off stack r3
-        push r4 on stack r3
-        push r5 on stack r3
-        
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2           # restore value of r1 pushed on callstack
+        pop r5 off stack r2           # restore value of r5 pushed on callstack
+        pop r4 off stack r2           # restore value of r4 pushed on callstack
         goto waiting
 
-# DUPE
+########################################################
+#                         DUPE          
+#   Purpose:
+#       - Duplicates the top element on the value stack 
+#         and pushes the duplicated value back onto the
+#         stack 
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 holds the duplicated element from the value stack
+#
+########################################################
 .section init
     m[r0][jumptable + 'd'] := DUPE
 .section text
     DUPE: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
         r1 := valuestack - r3
 
+        # if number of values in value stack (r1) is less than 1
         if (r1 <s 1) goto stack_underflow1 using r5
         
-        pop r4 off stack r3
-        r5 := r4
+        pop r4 off stack r3         # pop value off value stack and put in r4
+
+        r5 := r4                    # set r5 to r4's value
         
         
-        push r4 on stack r3
-        push r5 on stack r3
+        push r4 on stack r3         # push top of stack value back on
+        push r5 on stack r3         # push a dupe of top value on top of stack
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2         # restore value of r1 pushed on callstack
+        pop r5 off stack r2         # restore value of r5 pushed on callstack
+        pop r4 off stack r2         # restore value of r4 pushed on callstack
         goto waiting
 
-# Discard
+########################################################
+#                        discard          
+#   Purpose:
+#       - Pops the top element off the value stac
+#
+#   Register Usage:
+#       - r1 holds the difference between current position
+#         in value stack and the bottom of the stack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 primarily used as a temporary register
+#
+########################################################
 .section init
     m[r0][jumptable + 'p'] := discard
 .section text
     discard: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
+        # set r1 to number of elements in value stack r3 by subracting the end 
+        # pointer (valuestack) from the pointer to the "top" value of the value 
+        # stack (r3).
         r1 := valuestack - r3
-
+        
+        # if number of values in value stack (r1) is less than 1
         if (r1 <s 1) goto stack_underflow1 using r5
         
         pop r4 off stack r3
         
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2           # restore value of r1 pushed on callstack
+        pop r5 off stack r2           # restore value of r5 pushed on callstack
+        pop r4 off stack r2           # restore value of r4 pushed on callstack
         goto waiting
 
-# Zap
+########################################################
+#                        zap          
+#   Purpose:
+#       - Recursively empties the value stack
+#
+#   Register Usage:
+#       - r1 holds the return address ofor zapstack
+#       - r3 holds a pointer to the top of the value stack
+#       - r4 holds the top element from the value stack
+#       - r5 primarily used as a temporary register
+#
+########################################################
 .section init
     m[r0][jumptable + 'z'] := zap  #hehehe
 .section text
     zap: 
-        push r4 on stack r2
-        push r5 on stack r2
-        push r1 on stack r2
+        push r4 on stack r2       # save value of r4
+        push r5 on stack r2       # save value of r5
+        push r1 on stack r2       # save value of r1
 
         goto zapstack linking r1  
 
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2           # restore value of r1 pushed on callstack
+        pop r5 off stack r2           # restore value of r5 pushed on callstack
+        pop r4 off stack r2           # restore value of r4 pushed on callstack
         goto waiting
 
     zapstack:
+        # if current position is equal to the bottom of the value stack, return
         if (r3 == valuestack) goto r1 using r5
-        pop r4 off stack r3
+        pop r4 off stack r3        # removing top element from value stack
         goto zapstack
 
-
+#|----------------------------------------------------------------------------|#
+#|                              Error Functions                               |#
+#|----------------------------------------------------------------------------|#
 
 ########################################################
-#                Err Functions                         #
+#                   stack_under_flow2
+#   
+#   Purpose:
+#       - display error message for less than 2 elements 
+#         on stack
+#
+#   Register Usage:
+#       - restores values r1, r4, r5 that were pushed in the 
+#         operation functions (add, mult, ...)
+#               
 ########################################################
-    
-
+.section text  
     stack_underflow2:
         output "Stack underflow---expected at least 2 elements\n"
 
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2           # restore value of r1 pushed on callstack
+        pop r5 off stack r2           # restore value of r5 pushed on callstack
+        pop r4 off stack r2           # restore value of r4 pushed on callstack
         goto waiting
+
+########################################################
+#                   stack_under_flow1
+#   
+#   Purpose:
+#       - display error message for less than 1 element
+#         on stack
+#
+#   Register Usage:
+#       - restores values r1, r4, r5 that were pushed in the 
+#         operation functions (add, mult, ...)
+#               
+########################################################
+.section text  
     stack_underflow1:
         output "Stack underflow---expected at least 1 element\n"
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+
+        pop r1 off stack r2           # restore value of r1 pushed on callstack
+        pop r5 off stack r2           # restore value of r5 pushed on callstack
+        pop r4 off stack r2           # restore value of r4 pushed on callstack
         goto waiting
 
+########################################################
+#                    divide_zero
+#   
+#   Purpose:
+#       - display error message for division by 0
+#
+#   Register Usage:
+#       - restores values r1, r4, r5 that were pushed in the 
+#         operation functions (add, mult, ...) and r4
+#         when procedure is hit on the top element of value 
+#         stack
+#               
+########################################################
+.section text  
     divide_zero:
-        output "Division by zero\n"
-        push r4 on stack r3
+        output "Division by zero\n"        # output message
+        push r4 on stack r3                # restore value stack
 
-        pop r1 off stack r2
-        pop r5 off stack r2
-        pop r4 off stack r2
+        pop r1 off stack r2           # restore value of r1 pushed on callstack
+        pop r5 off stack r2           # restore value of r5 pushed on callstack
+        pop r4 off stack r2           # restore value of r4 pushed on callstack
+
         goto waiting
-    
+
+########################################################
+#                    Kill_program
+#   
+#   Purpose:
+#       - stops execution of program 
+#
+#   Register Usage:
+#       - No major register usages
+#               
+########################################################
+.section text  
     kill_program:
         halt

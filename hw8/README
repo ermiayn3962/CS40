@@ -1,0 +1,48 @@
+-- README
+
+Yoda Ermias (yermia01) and Cooper Golemme (cgolem01)
+
+-- Acknowledgements:
+    TAs: Nesir, Sam, Julia, Liam, and Dan thank you for your help!!!!  
+
+-- Implemented:
+    All parts of the specification has been implemented
+
+-- Calling Conventions:
+    r3:
+        We always used r3 for the value stack instead of storing the value
+        stack on the call stack because it could be an invarient across our
+        program, and it is used in almost every procedure and function.
+    r4:
+        We decided that a state flag was needed to differentiate between the
+        waiting and entering state. We wanted this flag to be persistant across
+        the main procedures of the program, so we set aside register 4 for that
+        flag. The value 1 is the entering state, and 0 is the waiting state.
+        In function calls, if r4 is used, r4 is first pushed on to the callstack
+        to save the state of the program with each function call.
+    
+    All other calling conventions of the spec were followed
+
+-- Print Module:
+    We implemented the print module as 2 recursive functions, the first of
+    which recursively prints a decimal value as a sequence of ASCII characters,
+    and the second of which calls this first function for each value on the
+    value stack.
+
+-- Value Stack:
+    We implemented the value stack similar to the call stack by setting aside
+    space in the .init section for it, and then setting a value called
+    "valuestack" to the bottom of that space.
+
+-- Sections:
+    init
+        initializes the jumptable and the value stack
+    text   
+        Creates functions and procedures of program
+    data
+        Creates the call stack
+
+-- Time:
+    Analysis:  5 hours
+    Coding:    3 hours
+    Debugging: 2 hours

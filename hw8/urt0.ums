@@ -1,11 +1,44 @@
-# File urt0.ums contains startup code to allocate space for the call stack (in the data section) and
-# initialize both the stack pointer and register 0 (in the init section)
+#|---------------------------------------------------------------------------|#
+#                              UMASM (RPN Calc)                               #
+#             ----------------------------------------------------            #
+#                                                                             #
+#  Authors:       Yoda Ermias (yermia01) & Cooper Golemme (cgolem01)          #
+#                                                                             #
+#  Date:          Dec 10, 2023                                                #
+#                                                                             #
+#  Description:   File urt0.ums contains startup code to allocate space       #
+#                 for the call stack (in the data section) and                #
+#                 initialize both the stack pointer and register              #
+#                 0 (in the init section)                                     #
+#|---------------------------------------------------------------------------|#
 
+########################################################
+#                     Conventions                      #
+#     * r0 - always set to zero                        #
+#     * r1 - always holds return address               #
+#     * r2 - call stack pointer                        #
+#     * r3 - value stack pointer                       #
+#     * r4 - program state flag                        #
+#     * r5 - volatile register (return from functions) #
+#     * r6 - volatile register                         #
+#     * r7 - volatile register                         #
+########################################################
 
 .section init 
     .zero r0
     .temps r6, r7
 
+########################################################
+#              Allocating Call Stack Space         
+#   Purpose:
+#       - Allocating space for the call stack 
+#
+#   Register Usage:
+#       - r0 holds zero (represents the 0th segment in
+#         memory)
+#       - r2 holds the pointer to the call stack
+#
+########################################################
 # call stack is huuuugeeee
 .section data
     .space 10000000

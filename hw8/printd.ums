@@ -1,35 +1,118 @@
-# File printd.ums contains a function for printing Universal Machine words in decimal.
+#|---------------------------------------------------------------------------|#
+#                              UMASM (RPN Calc)                               #
+#             ----------------------------------------------------            #
+#                                                                             #
+#  Authors:       Yoda Ermias (yermia01) & Cooper Golemme (cgolem01)          #
+#                                                                             #
+#  Date:          Dec 10, 2023                                                #
+#                                                                             #
+#  Description:   File printd.ums contains a function for                     #
+#                 printing Universal Machine words in                         #
+#                 decimal.                                                    #
+#|---------------------------------------------------------------------------|#
+
+
+########################################################
+#                     Conventions                      #
+#     * r0 - always set to zero                        #
+#     * r1 - always holds return address               #
+#     * r2 - call stack pointer                        #
+#     * r3 - value stack pointer                       #
+#     * r4 - program state flag                        #
+#     * r5 - volatile register (return from functions) #
+#     * r6 - volatile register                         #
+#     * r7 - volatile register                         #
+########################################################
+
+#|---------------------------------------------------------------------------|#
+#|                    Initializing temps and 0 register                      |#
+#|---------------------------------------------------------------------------|#
 .section init 
     .zero r0
     .temps r6, r7
 
+###########################################################################
+#                               Print
+#
+#       Purpose: prints in ASCII all values on the value stack (r3)
+#
+#       Register usage:
+#           - r3 is the value stack
+#           - r1 is the return adress for function calls
+#           - r2 is the call stack
+#
+###########################################################################
 .section text
     print: 
-        push r3 on stack r2 # saving value stack  
+        push r3 on stack r2 # Push value stack pointer on call stack to save it
 
-        goto print_recur linking r1
+        goto print_recur linking r1 # call function print_recur
 
-        pop r3 off stack r2 # restoring value stack
-        goto waiting
+        pop r3 off stack r2 # Restores value stack pointer from call stack
+        goto waiting # after printing is done, go to waiting
     
+###########################################################################
+#                        Print_minus_sign
+#
+#       Purpose: printing negative values by outputing negative sign and 
+#                flipping the sign of the value in r4 and printing normally
+#
+#       Register usage:
+#           - r4 is the value in decimal to print
+#
+###########################################################################
+.section text
     print_minus_sign:
-        output '-'
-        r4 := r4 * -1
-        goto pos
+        output '-'      # print leading "-"
+        r4 := r4 * -1   # make r4 positive
+        goto pos        # goto print r4 as positive number
 
+###########################################################################
+#                             print_recur 
+#
+#       Purpose: recursively prints all values on the value stack (r3) in 
+#                ASCII
+#
+#       Register usage:
+#           - r3 is value stack pointer
+#           - r4 is a decimal value from value stack
+#           - r5 is used as a general purpose register
+#
+###########################################################################
+.section text
     print_recur:
-        if (r3 == valuestack) goto r1 using r5
+        # base case: when the stack is empty
+        if (r3 == valuestack) goto r1 using r5   
 
-        pop r4 off stack r3
-        output ">>> "
-        if (r4 <s 0) goto print_minus_sign using r5
+        pop r4 off stack r3         # pop decimal value of number off stack r3
+        output ">>> "               # Ouput printing format
+
+        # if value in r4 is negative, handle printing of negative
+        # will fall through to pos if r4 is positive
+        if (r4 <s 0) goto print_minus_sign using r5 
+
+#######################################################################
+#                             pos
+#      
+#      Purpose: print the decimal value in r4 as a string of ascii 
+#               characters
+#
+#      Register Usage:
+#           - r2 is the call stack
+#           - r1 is the return address
+#           - r5 is a general purpose register
+#           - r4 is the decimal value popped from value stack
+#######################################################################
+.section text
         pos:
-            push r1 on stack r2
+            push r1 on stack r2  # save return adress
         
-            r5 := '!'       #recursive flag
-            push r5 on stack r2
-            #changes r1
-            goto print_value linking r1
+            r5 := '!'            # recursive flag, when hit we stop printing
+            push r5 on stack r2  # push flag onto call stack
+            
+            # goes to create the digit stack for printing
+            # changes r1 to reference this line
+            goto create_digit_stack linking r1 
             
             pop r1 off stack r2
         
@@ -37,20 +120,72 @@
 
             goto print_recur
 
-    print_value:
+###########################################################################
+#                             create_digit_stack
+#
+#       Purpose: recursively pushes each digit of the decimal number in r4 
+#                onto call stack starting with the least significant digit 
+#                first.
+#               
+#               Ex) r4 := 1234 
+#               
+#           (Call stack will look like this at the function call)
+#                          Most significant digit
+#
+#                     Top           ^           1
+#                                   |           2
+#                                   |           3
+#                                   |           4
+#                    Bottom         |           !  <- sentinal value pushed 
+#                                                     in 'pos' procedure
+#                         Least significant digit
+#
+#                                   
+#
+#       Register usage:
+#           - r3 is value stack pointer
+#           - r4 is a decimal value from value stack
+#           - r5 is used as a general purpose register
+#
+###########################################################################
+.section text
+    create_digit_stack:
     
-        r5 := r4
-        r4 := r4 / 10
-        r5 := r5 mod 10
+        r5 := r4                           # saves value from value stack in r5
+        r4 := r4 / 10                      # remove least sig. digit from r4
+        r5 := r5 mod 10                    # get least sig. digit from r4
 
-        push r5 on stack r2
+        push r5 on stack r2                # push least sig digit on call stack
+
+        # at each iteration, r4's least sig. digit is removed
+        # (line 2 of function)
+        # at last iteration, r4 is a single digit at the top of the function.
+        # Dividing r4 by 10 is 0 when r4 is a single digit.
+        # So, at last iteration, print the stack we just created
         if (r4 == 0) goto print_digit_stack using r5
 
-       
-        goto print_value
-        
-     print_digit_stack:
-        pop r5 off stack r2
-        if (r5 == '!') goto r1 using r4
+        # recurse to top
+        goto create_digit_stack
+    
+###########################################################################
+#                           print_digit_stack 
+#
+#       Purpose: prints single digit values from stack as ASCII until 
+#                sentinal "!" value is hit
+#
+#       Register usage:
+#           - r3 is value stack pointer
+#           - r4 is used as a general purpose register
+#           - r5 is used to store each single digit values popped off stack
+#
+###########################################################################
+.section text
+    print_digit_stack:
+        pop r5 off stack r2     # Pop single digit off stack
+        # base case: value "!" is hit which was initially pushed on call stack 
+        #            in Pos procedure
+        if (r5 == '!') goto r1 using r4     
+        # ouput single digit's ascii representaion
         output r5 + '0'
+        # go to top of function print_digit_stack
         goto print_digit_stack

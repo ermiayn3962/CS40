@@ -1,10 +1,36 @@
-# File callmain.ums makes the initial call to main, then halts (all in the init section). Not counting
-# blank lines or comments, the implementation of this module is only 5 lines of assembly code.
+#|---------------------------------------------------------------------------|#
+#                              UMASM (RPN Calc)                               #
+#             ----------------------------------------------------            #
+#                                                                             #
+#  Authors:       Yoda Ermias (yermia01) & Cooper Golemme (cgolem01)          #
+#                                                                             #
+#  Date:          Dec 10, 2023                                                #
+#                                                                             #
+#  Description:   File callmain.ums makes the initial call to main,           #
+#                 then halts (all in the init section). Not counting          #
+#                 blank lines or comments, the implementation                 #
+#                 of this module is only 5 lines of assembly code.            #
+#                                                                             #
+#|---------------------------------------------------------------------------|#
 
+
+########################################################
+#                     Conventions                      #
+#     * r0 - always set to zero                        #
+#     * r1 - always holds return address               #
+#     * r2 - call stack pointer                        #
+#     * r3 - value stack pointer                       #
+#     * r4 - program state flag                        #
+#     * r5 - volatile register (return from functions) #
+#     * r6 - volatile register                         #
+#     * r7 - volatile register                         #
+########################################################
 
 .section init
     .zero r0
     .temps r6, r7
-    goto main linking r1
+    
+    goto main linking r1 # Calling the main
+
     kill:
         halt
